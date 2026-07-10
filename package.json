@@ -11,7 +11,8 @@
     "postingest": "node scripts/compute-stats.mjs",
     "stats": "node scripts/compute-stats.mjs",
     "db:build": "node scripts/ingest.mjs && node scripts/compute-stats.mjs && node scripts/fetch-condamnations.mjs && node scripts/add-profession-cat.mjs",
-    "db:fetch": "node scripts/fetch-db.mjs"
+    "db:fetch": "node scripts/fetch-db.mjs",
+    "db:prepare": "node scripts/ensure-precompute.mjs"
   },
   "engines": {
     "node": ">=22 <25"

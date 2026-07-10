@@ -12,7 +12,10 @@ services:
     # --include=dev : NODE_ENV=production ferait sauter les devDependencies à
     # l'install, or tailwindcss / @tailwindcss/postcss / typescript sont requis
     # pour `next build`. On force donc leur installation.
-    buildCommand: npm ci --include=dev && npm run db:fetch && npm run build
+    # db:prepare = filet de sécurité : (re)crée la table de perf acteur_last_vote
+    # si le fichier téléchargé ne la contient pas, pour que /deputes et /groupes
+    # restent rapides quel que soit l'état du release asset.
+    buildCommand: npm ci --include=dev && npm run db:fetch && npm run db:prepare && npm run build
     startCommand: npm run start
     autoDeploy: true
     envVars:
