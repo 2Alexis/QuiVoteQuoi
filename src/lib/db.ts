@@ -18,6 +18,24 @@ export function db(): Database.Database {
   return _db;
 }
 
+// Sous-requête « dernier vote par acteur » pour une législature. Version rapide
+// (JOIN sur la table précalculée acteur_last_vote) si elle existe, sinon repli
+// sur le scan des votes — évite toute casse tant que la base n'est pas régénérée.
+// Les deux variantes exposent (uid, last_date) et prennent 1 paramètre : la lég.
+const LAST_VOTE_FAST = "SELECT uid, last_date FROM acteur_last_vote WHERE legislature = ?";
+const LAST_VOTE_SLOW =
+  "SELECT v.acteur_uid uid, MAX(s.date) last_date FROM votes v JOIN scrutins s ON s.uid = v.scrutin_uid WHERE s.legislature = ? GROUP BY v.acteur_uid";
+let _hasLastVoteTable: boolean | null = null;
+function lastVoteSubquery(): string {
+  if (_hasLastVoteTable === null) {
+    _hasLastVoteTable =
+      db()
+        .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='acteur_last_vote'")
+        .get() != null;
+  }
+  return _hasLastVoteTable ? LAST_VOTE_FAST : LAST_VOTE_SLOW;
+}
+
 export type Position = "pour" | "contre" | "abstention" | "nonvotant";
 
 export const LEGISLATURE_LABEL: Record<string, string> = {
@@ -236,9 +254,7 @@ export function compositionActuelle(leg = DEFAULT_LEG): Groupe[] {
            ) rn
          FROM mandats m
          LEFT JOIN (
-           SELECT v.acteur_uid uid, MAX(s.date) last_date
-           FROM votes v JOIN scrutins s ON s.uid = v.scrutin_uid
-           WHERE s.legislature = ? GROUP BY v.acteur_uid
+           ${lastVoteSubquery()}
          ) lv ON lv.uid = m.uid
          WHERE m.legislature = ?
        ) x
@@ -272,9 +288,7 @@ export function siegesActuels(leg = DEFAULT_LEG): SiegeActuel[] {
            ) rn
          FROM mandats m
          LEFT JOIN (
-           SELECT v.acteur_uid uid, MAX(s.date) last_date
-           FROM votes v JOIN scrutins s ON s.uid = v.scrutin_uid
-           WHERE s.legislature = ? GROUP BY v.acteur_uid
+           ${lastVoteSubquery()}
          ) lv ON lv.uid = m.uid
          WHERE m.legislature = ?
        ) x
@@ -338,9 +352,7 @@ export function professionsParGroupe(leg = DEFAULT_LEG): ProfessionsTable {
            ) rn
          FROM mandats m
          LEFT JOIN (
-           SELECT v.acteur_uid uid, MAX(s.date) last_date
-           FROM votes v JOIN scrutins s ON s.uid = v.scrutin_uid
-           WHERE s.legislature = ? GROUP BY v.acteur_uid
+           ${lastVoteSubquery()}
          ) lv ON lv.uid = m.uid
          WHERE m.legislature = ?
        ) x

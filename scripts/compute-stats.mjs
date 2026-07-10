@@ -42,6 +42,19 @@ db.exec(`
   CREATE INDEX idx_sg_leg ON scrutin_groupe(legislature, groupe_uid);
 `);
 
+// Date du dernier vote de chaque acteur par législature. Précalculée ici (une
+// fois par build) pour éviter de rescanner les 1,8 M de votes à chaque affichage
+// des pages composition / groupes / députés (JOIN direct au lieu d'un GROUP BY).
+console.log("→ acteur_last_vote");
+db.exec(`
+  DROP TABLE IF EXISTS acteur_last_vote;
+  CREATE TABLE acteur_last_vote AS
+  SELECT v.acteur_uid AS uid, s.legislature AS legislature, MAX(s.date) AS last_date
+  FROM votes v JOIN scrutins s ON s.uid = v.scrutin_uid
+  GROUP BY v.acteur_uid, s.legislature;
+  CREATE INDEX idx_alv ON acteur_last_vote(legislature, uid);
+`);
+
 console.log("→ scrutin_presid");
 db.exec("DROP TABLE IF EXISTS scrutin_presid");
 db.exec(`CREATE TABLE scrutin_presid (scrutin_uid TEXT PRIMARY KEY, legislature TEXT,
