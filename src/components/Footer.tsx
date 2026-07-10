@@ -11,6 +11,7 @@ const NAVIGATION = [
 ];
 
 const INFORMATIONS = [
+  { href: "/methodologie", label: "Méthodologie" },
   { href: "/mentions-legales", label: "Mentions légales" },
   { href: "/conditions-utilisation", label: "Conditions d’utilisation" },
 ];
