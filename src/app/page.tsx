@@ -1,65 +1,165 @@
-import Image from "next/image";
+import Link from "next/link";
+import { stats, compositionActuelle, scrutins } from "@/lib/db";
+import { formatNumber, formatDate, sortBadge, groupBloc } from "@/lib/ui";
+import { GroupBadge, VoteBar, Hemicycle } from "@/components/bits";
+
+export const dynamic = "force-static";
+
+const BLOCS = [
+  { key: "ext-gauche", label: "Extrême gauche", color: "#7A0C1E" },
+  { key: "gauche", label: "Gauche", color: "#C8102E" },
+  { key: "centre", label: "Bloc central", color: "#E7A100" },
+  { key: "droite", label: "Droite", color: "#2563AC" },
+  { key: "ext-droite", label: "Extrême droite", color: "#1B345E" },
+  { key: "autre", label: "Divers / NI", color: "#8A96A3" },
+] as const;
 
 export default function Home() {
+  const s = stats();
+  const gs = compositionActuelle();
+  const derniers = scrutins({ perPage: 6 }).rows;
+  const totalSieges = gs.reduce((a, g) => a + (g.n ?? 0), 0);
+  const blocs = BLOCS.map((b) => ({
+    ...b,
+    n: gs.filter((g) => groupBloc(g.abrege) === b.key).reduce((a, g) => a + (g.n ?? 0), 0),
+  })).filter((b) => b.n > 0);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="space-y-10">
+      <section className="space-y-5">
+        <div className="max-w-2xl space-y-4">
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            L&apos;Assemblée nationale, enfin lisible.
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-lg text-[var(--muted)]">
+            Difficile de savoir ce que votent vraiment les députés. QuiVoteQuoi rend chaque scrutin,
+            chaque vote et chaque prise de position clairs et comparables — à partir de l&apos;open
+            data officiel.
           </p>
+          <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+            {[
+              "Tous les scrutins publics",
+              "Le vote de chaque député",
+              "Comparez députés et groupes",
+            ].map((f) => (
+              <li key={f} className="flex items-center gap-1.5">
+                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[10px] font-bold text-[var(--accent-strong)]">
+                  ✓
+                </span>
+                {f}
+              </li>
+            ))}
+          </ul>
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            <Link href="/comparateur" className="btn-primary">
+              <span aria-hidden>⇄</span> Comparer les votes
+            </Link>
+            <Link href="/scrutins" className="btn-secondary">
+              Voir les derniers scrutins
+            </Link>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      <section className="space-y-2">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            { label: "Députés", value: s.deputes, href: "/deputes" },
+            { label: "Scrutins", value: s.scrutins, href: "/scrutins" },
+            { label: "Votes enregistrés", value: s.votes, href: "/scrutins" },
+            { label: "Groupes", value: s.groupes, href: "/groupes" },
+          ].map((c) => (
+            <Link key={c.label} href={c.href} className="card p-4 transition-shadow hover:shadow-sm">
+              <div className="stat-num text-2xl font-bold sm:text-3xl">{formatNumber(c.value)}</div>
+              <div className="text-sm text-[var(--muted)]">{c.label}</div>
+            </Link>
+          ))}
         </div>
-      </main>
+        <p className="text-xs text-[var(--muted)]">
+          Données officielles de l&apos;Assemblée nationale, à jour au {formatDate(s.lastDate)}.
+        </p>
+      </section>
+
+      <section className="space-y-3">
+        <div className="flex items-baseline justify-between">
+          <h2 className="text-lg font-semibold">Composition de l&apos;Assemblée</h2>
+          <Link href="/groupes" className="text-sm text-[var(--muted)] link-accent">
+            Tous les groupes →
+          </Link>
+        </div>
+        <div className="card grid gap-6 p-5 lg:grid-cols-2">
+          <div className="space-y-4">
+            <Hemicycle groupes={gs} />
+            {blocs.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5">
+                {blocs.map((b) => (
+                  <span key={b.key} className="inline-flex items-center gap-1.5 text-xs">
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: b.color }} />
+                    <span className="font-medium">{b.label}</span>
+                    <span className="text-[var(--muted)]">{b.n}</span>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <div className="mb-1 flex items-baseline justify-between">
+              <span className="text-sm font-medium">Groupes parlementaires</span>
+              <span className="text-xs text-[var(--muted)]">{totalSieges} sièges</span>
+            </div>
+            {gs.map((g) => (
+              <Link
+                key={g.uid}
+                href={`/groupes/${g.uid}`}
+                className="flex items-center gap-3 rounded-lg p-1.5 hover:bg-[var(--background)]"
+              >
+                <GroupBadge abrege={g.abrege} libelle={g.libelle} />
+                <span className="flex-1 truncate text-sm">{g.libelle}</span>
+                <span className="stat-num text-sm font-semibold">{g.n}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <div className="flex items-baseline justify-between">
+          <h2 className="text-lg font-semibold">Derniers scrutins</h2>
+          <Link href="/scrutins" className="text-sm text-[var(--muted)] link-accent">
+            Tout voir →
+          </Link>
+        </div>
+        <div className="card divide-y divide-[var(--border)]">
+          {derniers.map((sc) => {
+            const b = sortBadge(sc.sort_code);
+            return (
+              <Link
+                key={sc.uid}
+                href={`/scrutins/${sc.uid}`}
+                className="block p-4 hover:bg-[var(--background)] transition-colors"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs text-[var(--muted)]">
+                    {formatDate(sc.date)} · n°{sc.numero}
+                  </span>
+                  <span className={`badge ${b.cls}`}>{b.label}</span>
+                </div>
+                <div className="mt-1 line-clamp-2 text-sm font-medium">{sc.titre}</div>
+                <div className="mt-2 flex items-center gap-3">
+                  <VoteBar
+                    pour={sc.pour ?? 0}
+                    contre={sc.contre ?? 0}
+                    abstention={sc.abstentions ?? 0}
+                  />
+                  <span className="whitespace-nowrap text-xs text-[var(--muted)]">
+                    {sc.pour} pour · {sc.contre} contre
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }

@@ -1,26 +1,164 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f5f6f8;
+  --surface: #ffffff;
+  --foreground: #161a20;
+  --muted: #5b6572;
+  --border: #e5e8ed;
+  /* Palette neutre (sarcelle) — volontairement à l'écart du bleu/rouge
+     politiques, pour ne suggérer aucune orientation. Les couleurs de parti
+     ne servent qu'à représenter des données (cartes, graphiques, badges). */
+  --accent: #0f766e;
+  --accent-2: #0d9488;
+  --accent-strong: #0b5951;
+  --accent-soft: rgba(15, 118, 110, 0.14);
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03);
+}
+
+/* Navigation ------------------------------------------------------------- */
+.nav-item {
+  border-radius: 0.5rem;
+  padding: 0.45rem 0.95rem;
+  color: var(--muted);
+  font-weight: 500;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.nav-item:hover {
+  background: var(--background);
+  color: var(--foreground);
+}
+.nav-item[data-active="true"] {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+/* Comparateur : fonctionnalité phare, mise en avant */
+.nav-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.85rem;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+.nav-cta:hover {
+  background: var(--accent-strong);
+}
+.nav-cta[data-active="true"] {
+  background: var(--accent-strong);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* Boutons d'action ------------------------------------------------------- */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 0.6rem;
+  padding: 0.62rem 1.15rem;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+.btn-primary:hover {
+  background: var(--accent-strong);
+  box-shadow: 0 1px 3px rgba(11, 89, 81, 0.25);
+}
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 0.6rem;
+  padding: 0.62rem 1.15rem;
+  background: var(--surface);
+  color: var(--foreground);
+  font-weight: 600;
+  border: 1px solid var(--border);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.btn-secondary:hover {
+  background: var(--background);
+  border-color: #cdd3db;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  line-height: 1;
+}
+.badge-adopte { background: #e4f5ea; color: #1f7a44; }
+.badge-rejete { background: #fde7ea; color: #b00c26; }
+.badge-neutre { background: #eef1f4; color: #5b6572; }
+
+/* Barre de ventilation des votes */
+.votebar {
+  display: flex;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #eef1f4;
+}
+.votebar > span { display: block; height: 100%; }
+
+.stat-num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.link-accent:hover { color: var(--accent-2); }
+
+table.data { width: 100%; border-collapse: collapse; }
+table.data th {
+  text-align: left;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+table.data td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+table.data tr:hover td { background: #fafbfc; }

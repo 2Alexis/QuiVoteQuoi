@@ -1,0 +1,52 @@
+# Fabrique la base SQLite chaque nuit à partir de l'open data officiel de
+# l'Assemblée, la compacte, et la publie comme « release asset » (tag data-latest).
+# Puis redéclenche un déploiement Render pour que le site prenne les données du jour.
+# GitHub Actions est gratuit (illimité sur un dépôt public).
+name: Construire et publier la base
+
+on:
+  schedule:
+    - cron: "0 4 * * *" # tous les jours à 04:00 UTC
+  workflow_dispatch: {} # + bouton « Run workflow » manuel
+
+permissions:
+  contents: write # nécessaire pour créer/mettre à jour la release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Construire la base
+        run: npm run db:build
+
+      - name: Compacter (VACUUM)
+        run: >-
+          node -e "const fs=require('fs');const
+          db=require('better-sqlite3')('data/hemicycle.db');db.exec(\"VACUUM INTO
+          'data/hemicycle.tmp.db'\");db.close();fs.renameSync('data/hemicycle.tmp.db','data/hemicycle.db')"
+
+      - name: Publier la release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: data-latest
+          name: Base de données (dernière version)
+          files: data/hemicycle.db
+
+      - name: Redéclencher le déploiement Render
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -n "$HOOK" ]; then
+            curl -fsSL "$HOOK" && echo "Déploiement Render déclenché."
+          else
+            echo "RENDER_DEPLOY_HOOK non configuré — étape ignorée."
+          fi

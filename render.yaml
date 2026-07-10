@@ -1,0 +1,24 @@
+# Blueprint Render — service web Node, plan GRATUIT.
+# La base SQLite (~200 Mo) n'est PAS dans le dépôt et n'est PAS reconstruite ici
+# (trop lourd pour le free tier). Elle est fabriquée chaque nuit par GitHub Actions
+# (.github/workflows/build-data.yml) et publiée comme release asset ; Render la
+# TÉLÉCHARGE simplement au build via `npm run db:fetch` (variable DB_URL).
+services:
+  - type: web
+    name: quivotequoi
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm ci && npm run db:fetch && npm run build
+    startCommand: npm run start
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      # URL du fichier hemicycle.db publié par GitHub Actions. À renseigner dans
+      # le dashboard Render (Environment) :
+      #   https://github.com/<user>/<repo>/releases/download/data-latest/hemicycle.db
+      - key: DB_URL
+        sync: false
