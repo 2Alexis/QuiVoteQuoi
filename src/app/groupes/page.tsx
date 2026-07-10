@@ -1,6 +1,6 @@
 import Link from "next/link";
 import {
-  groupes,
+  compositionActuelle,
   professionsParGroupe,
   legislatures,
   positionsGroupes,
@@ -20,7 +20,9 @@ export default async function GroupesPage({
 }) {
   const sp = await searchParams;
   const leg = sp.leg || DEFAULT_LEG;
-  const gs = groupes(leg);
+  // Composition instantanée (un titulaire courant par circonscription) plutôt que
+  // le cumul des passages : les effectifs affichés reflètent les 577 sièges réels.
+  const gs = compositionActuelle(leg);
   const total = gs.reduce((a, g) => a + (g.n ?? 0), 0);
   const profs = professionsParGroupe(leg);
   const positions = positionsGroupes(leg);

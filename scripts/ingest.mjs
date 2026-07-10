@@ -65,6 +65,7 @@ function initDb(db) {
     CREATE TABLE mandats (
       uid TEXT, legislature TEXT, groupe_uid TEXT,
       dept TEXT, num_dept TEXT, num_circo TEXT,
+      date_debut TEXT, date_fin TEXT, cause_fin TEXT,
       PRIMARY KEY (uid, legislature)
     );
     CREATE TABLE scrutins (
@@ -99,8 +100,8 @@ function ingestActeursOrganes(db, zipPath, legislature, legList = [legislature])
      VALUES (@uid,@civ,@prenom,@nom,@profession,@fam_socpro)`
   );
   const insMan = db.prepare(
-    `INSERT OR REPLACE INTO mandats (uid,legislature,groupe_uid,dept,num_dept,num_circo)
-     VALUES (@uid,@legislature,@groupe_uid,@dept,@num_dept,@num_circo)`
+    `INSERT OR REPLACE INTO mandats (uid,legislature,groupe_uid,dept,num_dept,num_circo,date_debut,date_fin,cause_fin)
+     VALUES (@uid,@legislature,@groupe_uid,@dept,@num_dept,@num_circo,@date_debut,@date_fin,@cause_fin)`
   );
   let nOrg = 0, nDep = 0;
   const tx = db.transaction(() => {
@@ -151,6 +152,12 @@ function ingestActeursOrganes(db, zipPath, legislature, legList = [legislature])
             dept: str(el?.departement),
             num_dept: str(el?.numDepartement),
             num_circo: str(el?.numCirco),
+            // Dates du mandat de député (ASSEMBLEE) : date_fin null = mandat en
+            // cours. Sert à identifier le titulaire courant de chaque siège et à
+            // distinguer les députés en exercice des anciens (remplacés).
+            date_debut: asm.dateDebut ?? null,
+            date_fin: asm.dateFin ?? null,
+            cause_fin: asm.mandature?.causeFin ?? null,
           });
         }
         }

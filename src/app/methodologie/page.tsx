@@ -309,14 +309,29 @@ export default function MethodologiePage() {
         </p>
       </Section>
 
-      <Section id="composition" titre="Composition « instantanée »">
+      <Section id="composition" titre="Composition « instantanée » et anciens députés">
         <p className="text-sm leading-relaxed text-[var(--muted)]">
-          Sur une législature, plusieurs personnes peuvent occuper successivement un même siège
-          (remplacements, démissions…). Pour refléter l’état actuel plutôt que le cumul des
-          passages, on ne garde qu’<strong className="text-[var(--foreground)]">un seul titulaire
-          par circonscription</strong> (département + numéro de circonscription)&nbsp;: le plus
-          récent, c’est-à-dire celui qui a voté en dernier. C’est cette composition (577 sièges) qui
-          sert de base aux cartes et aux agrégats par département ou par catégorie.
+          L’Assemblée nationale compte <strong className="text-[var(--foreground)]">577 sièges</strong>,
+          mais sur une même législature bien plus de personnes peuvent les occuper successivement
+          (nomination au Gouvernement, démission, décès, décision du Conseil constitutionnel,
+          suppléants…). Sur la 17<sup>e</sup> législature, plus de 640 personnes ont ainsi détenu un
+          mandat de député, alors que 577 sièges seulement existent à un instant donné.
+        </p>
+        <p className="text-sm leading-relaxed text-[var(--muted)]">
+          Pour refléter l’état réel de l’hémicycle, on ne garde qu’
+          <strong className="text-[var(--foreground)]">un seul titulaire par circonscription</strong>{" "}
+          (département + numéro de circonscription)&nbsp;: le titulaire courant, déterminé à partir
+          des <strong className="text-[var(--foreground)]">dates officielles de mandat</strong> — le
+          mandat en cours (sans date de fin) l’emporte, sinon le mandat terminé le plus récemment.
+          Cette méthode identifie correctement un député tout juste arrivé, même s’il n’a pas encore
+          voté. C’est cette composition (577 sièges) qui sert de base aux cartes et aux agrégats par
+          département ou par catégorie.
+        </p>
+        <p className="text-sm leading-relaxed text-[var(--muted)]">
+          Sur la page des députés, cette logique sépare distinctement les{" "}
+          <strong className="text-[var(--foreground)]">577 députés en exercice</strong> des{" "}
+          <strong className="text-[var(--foreground)]">anciens députés</strong> de la législature
+          (remplacés en cours de mandat), avec pour ces derniers le motif de départ.
         </p>
       </Section>
 

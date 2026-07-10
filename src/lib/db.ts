@@ -36,6 +36,64 @@ function lastVoteSubquery(): string {
   return _hasLastVoteTable ? LAST_VOTE_FAST : LAST_VOTE_SLOW;
 }
 
+// Colonnes de dates de mandat (date_debut/date_fin/cause_fin) : présentes après
+// régénération de la base par ingest.mjs. Elles identifient de façon fiable le
+// titulaire courant de chaque siège ; tant qu'elles manquent, on se replie sur
+// la date du dernier vote (approximation, cf. holderRanking).
+let _hasMandatDates: boolean | null = null;
+function hasMandatDates(): boolean {
+  if (_hasMandatDates === null) {
+    _hasMandatDates = (db().prepare("PRAGMA table_info(mandats)").all() as { name: string }[]).some(
+      (c) => c.name === "date_fin"
+    );
+  }
+  return _hasMandatDates;
+}
+
+// Classement des détenteurs successifs d'un même siège afin de retenir le
+// « titulaire courant » (rn = 1) par circonscription. Avec les dates officielles
+// de mandat si disponibles — mandat en cours (date_fin NULL) d'abord, puis fin la
+// plus récente : c'est robuste même pour un député tout juste arrivé qui n'a pas
+// encore voté. Sinon repli sur la date du dernier vote. Renvoie de quoi composer
+// la requête (clause JOIN, clause ORDER BY) et les paramètres `legislature`
+// attendus (1 avec les dates, 2 avec le repli votes).
+function holderRanking(leg: string): { join: string; order: string; params: string[] } {
+  if (hasMandatDates()) {
+    return {
+      join: "",
+      order: "(m.date_fin IS NULL) DESC, m.date_fin DESC, m.date_debut DESC, m.uid",
+      params: [leg],
+    };
+  }
+  return {
+    join: `LEFT JOIN (${lastVoteSubquery()}) lv ON lv.uid = m.uid`,
+    order: "lv.last_date DESC NULLS LAST, m.uid",
+    params: [leg, leg],
+  };
+}
+
+// UID des députés « titulaires » du siège au moment le plus récent (un par
+// circonscription = 577). Sert à séparer, sur la liste des députés, les mandats
+// en cours des anciens députés remplacés au fil de la législature.
+export function uidsTitulaires(leg = DEFAULT_LEG): Set<string> {
+  const r = holderRanking(leg);
+  const rows = db()
+    .prepare(
+      `SELECT x.uid FROM (
+         SELECT m.uid,
+           ROW_NUMBER() OVER (
+             PARTITION BY m.dept, m.num_circo
+             ORDER BY ${r.order}
+           ) rn
+         FROM mandats m
+         ${r.join}
+         WHERE m.legislature = ?
+       ) x WHERE x.rn = 1`
+    )
+    .all(...r.params) as { uid: string }[];
+  return new Set(rows.map((x) => x.uid));
+}
+
 export type Position = "pour" | "contre" | "abstention" | "nonvotant";
 
 export const LEGISLATURE_LABEL: Record<string, string> = {
@@ -71,6 +129,8 @@ export interface Depute {
   dept?: string | null;
   num_dept?: string | null;
   num_circo?: string | null;
+  date_fin?: string | null; // fin du mandat (NULL = en cours) — cf. ingest.mjs
+  cause_fin?: string | null; // motif de fin (nomination au Gouvernement, démission…)
 }
 
 export interface Scrutin {
@@ -243,6 +303,7 @@ export function groupe(uid: string): Groupe | undefined {
 // dernier). Reflète l'état actuel plutôt que le cumul des passages sur la
 // législature (remplaçants inclus).
 export function compositionActuelle(leg = DEFAULT_LEG): Groupe[] {
+  const r = holderRanking(leg);
   return db()
     .prepare(
       `SELECT o.uid, o.abrege, o.libelle, o.date_debut, o.date_fin, COUNT(*) n
@@ -250,12 +311,10 @@ export function compositionActuelle(leg = DEFAULT_LEG): Groupe[] {
          SELECT m.groupe_uid,
            ROW_NUMBER() OVER (
              PARTITION BY m.dept, m.num_circo
-             ORDER BY lv.last_date DESC NULLS LAST, m.uid
+             ORDER BY ${r.order}
            ) rn
          FROM mandats m
-         LEFT JOIN (
-           ${lastVoteSubquery()}
-         ) lv ON lv.uid = m.uid
+         ${r.join}
          WHERE m.legislature = ?
        ) x
        JOIN organes o ON o.uid = x.groupe_uid
@@ -264,7 +323,7 @@ export function compositionActuelle(leg = DEFAULT_LEG): Groupe[] {
        HAVING n > 0
        ORDER BY n DESC`
     )
-    .all(leg, leg) as Groupe[];
+    .all(...r.params) as Groupe[];
 }
 
 export interface SiegeActuel {
@@ -277,6 +336,7 @@ export interface SiegeActuel {
 // Un siège = un titulaire par circonscription (le plus récent), avec son
 // département et son groupe. Base des cartes/agrégats par département.
 export function siegesActuels(leg = DEFAULT_LEG): SiegeActuel[] {
+  const r = holderRanking(leg);
   return db()
     .prepare(
       `SELECT x.num_dept, x.dept, x.groupe_uid, o.abrege
@@ -284,18 +344,16 @@ export function siegesActuels(leg = DEFAULT_LEG): SiegeActuel[] {
          SELECT m.num_dept, m.dept, m.groupe_uid,
            ROW_NUMBER() OVER (
              PARTITION BY m.dept, m.num_circo
-             ORDER BY lv.last_date DESC NULLS LAST, m.uid
+             ORDER BY ${r.order}
            ) rn
          FROM mandats m
-         LEFT JOIN (
-           ${lastVoteSubquery()}
-         ) lv ON lv.uid = m.uid
+         ${r.join}
          WHERE m.legislature = ?
        ) x
        LEFT JOIN organes o ON o.uid = x.groupe_uid
        WHERE x.rn = 1`
     )
-    .all(leg, leg) as SiegeActuel[];
+    .all(...r.params) as SiegeActuel[];
 }
 
 // --- Catégories socio-professionnelles (INSEE, famSocPro) par groupe ---
@@ -341,6 +399,7 @@ const CAT_ORDER = [
 // instantanée (un titulaire par circonscription). Une ligne par catégorie,
 // une colonne par groupe.
 export function professionsParGroupe(leg = DEFAULT_LEG): ProfessionsTable {
+  const r = holderRanking(leg);
   const rows = db()
     .prepare(
       `SELECT o.uid, o.abrege, o.libelle, d.fam_socpro fam
@@ -348,19 +407,17 @@ export function professionsParGroupe(leg = DEFAULT_LEG): ProfessionsTable {
          SELECT m.uid, m.groupe_uid,
            ROW_NUMBER() OVER (
              PARTITION BY m.dept, m.num_circo
-             ORDER BY lv.last_date DESC NULLS LAST, m.uid
+             ORDER BY ${r.order}
            ) rn
          FROM mandats m
-         LEFT JOIN (
-           ${lastVoteSubquery()}
-         ) lv ON lv.uid = m.uid
+         ${r.join}
          WHERE m.legislature = ?
        ) x
        JOIN organes o ON o.uid = x.groupe_uid
        JOIN deputes d ON d.uid = x.uid
        WHERE x.rn = 1 AND o.code_type = 'GP'`
     )
-    .all(leg, leg) as { uid: string; abrege: string | null; libelle: string | null; fam: string | null }[];
+    .all(...r.params) as { uid: string; abrege: string | null; libelle: string | null; fam: string | null }[];
 
   const groupTotals: Record<string, { abrege: string; libelle: string | null; n: number }> = {};
   const byCat: Record<string, ProfCategorie> = {};
@@ -481,10 +538,14 @@ export function deputes(
     clauses.push("m.num_dept = ?");
     params.push(numDept);
   }
+  // date_fin/cause_fin seulement si la base a été régénérée avec ces colonnes.
+  const dateCols = hasMandatDates()
+    ? "m.date_fin, m.cause_fin,"
+    : "NULL date_fin, NULL cause_fin,";
   return db()
     .prepare(
       `SELECT d.uid, d.civ, d.prenom, d.nom, d.profession,
-              m.groupe_uid, m.dept, m.num_dept, m.num_circo,
+              m.groupe_uid, m.dept, m.num_dept, m.num_circo, ${dateCols}
               o.abrege groupe_abrege, o.libelle groupe_libelle
        FROM mandats m
        JOIN deputes d ON d.uid = m.uid

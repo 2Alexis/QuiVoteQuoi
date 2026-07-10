@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { deputes, groupes, legislatures, siegesActuels, DEFAULT_LEG } from "@/lib/db";
+import { deputes, groupes, legislatures, siegesActuels, uidsTitulaires, DEFAULT_LEG, type Depute } from "@/lib/db";
 import { GroupBadge, LegSwitcher } from "@/components/bits";
 import { FranceMap, type DeptAgg } from "@/components/FranceMap";
 import { DeputePhoto } from "@/components/DeputePhoto";
@@ -9,6 +9,55 @@ import departementsData from "@/data/departements.json";
 export const dynamic = "force-dynamic";
 
 const METRO_CODES = new Set(departementsData.departements.map((d) => d.code));
+
+// Étiquette courte pour le motif de fin de mandat d'un ancien député.
+function causeCourte(cause: string | null | undefined): string | null {
+  if (!cause) return null;
+  const c = cause.toLowerCase();
+  if (c.includes("gouvernement") && c.includes("nomination")) return "Entré·e au Gouvernement";
+  if (c.includes("reprise")) return "Remplacé·e (retour d’un ministre)";
+  if (c.includes("incompatibilit")) return "Incompatibilité (cumul)";
+  if (c.includes("annulation")) return "Élection annulée";
+  if (c.includes("conseil constitutionnel")) return "Décision du Conseil const.";
+  if (c.includes("décès") || c.includes("deces")) return "Décès";
+  if (c.includes("mission")) return "Mission temporaire";
+  if (c.includes("démission") || c.includes("demission")) return "Démission";
+  return cause;
+}
+
+// Carte d'un député, réutilisée pour les mandats en cours et les anciens députés.
+function DeputeCarte({ d, leg, ancien }: { d: Depute; leg: string; ancien?: boolean }) {
+  const cause = ancien ? causeCourte(d.cause_fin) : null;
+  return (
+    <Link
+      href={`/deputes/${d.uid}`}
+      className={`card flex flex-col items-center gap-2 p-4 text-center transition-shadow hover:shadow-sm ${
+        ancien ? "opacity-90" : ""
+      }`}
+      style={{ borderTop: `3px solid ${groupColor(d.groupe_abrege)}` }}
+    >
+      <DeputePhoto
+        src={deputePhotoUrl(d.uid, leg)}
+        prenom={d.prenom}
+        nom={d.nom}
+        color={groupColor(d.groupe_abrege)}
+        size={88}
+      />
+      <div className="font-semibold leading-tight">
+        {d.prenom} {d.nom}
+      </div>
+      <div className="text-xs text-[var(--muted)]">
+        {d.dept ? `${d.dept} · circo. ${d.num_circo}` : "—"}
+      </div>
+      <GroupBadge abrege={d.groupe_abrege} libelle={d.groupe_libelle} />
+      {cause && (
+        <span className="mt-0.5 rounded-full bg-[var(--border)]/60 px-2 py-0.5 text-[11px] text-[var(--muted)]">
+          {cause}
+        </span>
+      )}
+    </Link>
+  );
+}
 
 export default async function DeputesPage({
   searchParams,
@@ -23,9 +72,17 @@ export default async function DeputesPage({
   const list = deputes(search, g, leg, dept);
   const gs = groupes(leg);
 
+  // Sépare les mandats en cours (titulaire courant de chaque siège = 577) des
+  // anciens députés (remplacés en cours de législature : ministres, démissions,
+  // décès…). uidsTitulaires s'appuie sur les dates de mandat officielles.
+  const titulaires = uidsTitulaires(leg);
+  const actifs = list.filter((d) => titulaires.has(d.uid));
+  const anciens = list.filter((d) => !titulaires.has(d.uid));
+  const isCurrent = leg === DEFAULT_LEG;
+
   const PAGE = 60;
   const show = Math.max(PAGE, parseInt(sp.show ?? "", 10) || PAGE);
-  const shown = list.slice(0, show);
+  const shown = actifs.slice(0, show);
   const moreHref = () => {
     const u = new URLSearchParams();
     if (search) u.set("q", search);
@@ -74,7 +131,10 @@ export default async function DeputesPage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Députés</h1>
-          <p className="text-sm text-[var(--muted)]">{list.length} députés</p>
+          <p className="text-sm text-[var(--muted)]">
+            {actifs.length} députés {isCurrent ? "en exercice" : "(titulaires du siège)"}
+            {anciens.length > 0 && ` · ${anciens.length} anciens`}
+          </p>
         </div>
         <LegSwitcher current={leg} base="/deputes" legislatures={legislatures()} />
       </div>
@@ -107,36 +167,21 @@ export default async function DeputesPage({
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {shown.map((d) => (
-          <Link
-            key={d.uid}
-            href={`/deputes/${d.uid}`}
-            className="card flex flex-col items-center gap-2 p-4 text-center transition-shadow hover:shadow-sm"
-            style={{ borderTop: `3px solid ${groupColor(d.groupe_abrege)}` }}
-          >
-            <DeputePhoto
-              src={deputePhotoUrl(d.uid, leg)}
-              prenom={d.prenom}
-              nom={d.nom}
-              color={groupColor(d.groupe_abrege)}
-              size={88}
-            />
-            <div className="font-semibold leading-tight">
-              {d.prenom} {d.nom}
-            </div>
-            <div className="text-xs text-[var(--muted)]">
-              {d.dept ? `${d.dept} · circo. ${d.num_circo}` : "—"}
-            </div>
-            <GroupBadge abrege={d.groupe_abrege} libelle={d.groupe_libelle} />
-          </Link>
+          <DeputeCarte key={d.uid} d={d} leg={leg} />
         ))}
-        {list.length === 0 && (
+        {actifs.length === 0 && anciens.length === 0 && (
           <div className="col-span-full p-8 text-center text-sm text-[var(--muted)]">
             Aucun député trouvé.
           </div>
         )}
+        {actifs.length === 0 && anciens.length > 0 && (
+          <div className="col-span-full p-8 text-center text-sm text-[var(--muted)]">
+            Aucun député en exercice pour ce filtre — voir les anciens députés ci-dessous.
+          </div>
+        )}
       </div>
 
-      {list.length > shown.length && (
+      {actifs.length > shown.length && (
         <div className="flex flex-col items-center gap-2 pt-1">
           <Link
             href={moreHref()}
@@ -145,9 +190,31 @@ export default async function DeputesPage({
             Voir plus
           </Link>
           <span className="text-xs text-[var(--muted)]">
-            {shown.length} sur {list.length} députés
+            {shown.length} sur {actifs.length} députés
           </span>
         </div>
+      )}
+
+      {anciens.length > 0 && (
+        <section className="space-y-3 border-t border-[var(--border)] pt-6">
+          <div>
+            <h2 className="text-lg font-semibold">
+              Anciens députés{isCurrent ? " de la législature" : ""}{" "}
+              <span className="text-sm font-normal text-[var(--muted)]">({anciens.length})</span>
+            </h2>
+            <p className="text-sm text-[var(--muted)]">
+              Élus ayant quitté leur siège en cours de {leg}
+              <sup>e</sup> législature (nomination au Gouvernement, démission, décès, décision du
+              Conseil constitutionnel…). Ils ont été remplacés par leur suppléant ou à la suite
+              d’une élection partielle, et n’entrent donc pas dans le décompte des 577 sièges.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {anciens.map((d) => (
+              <DeputeCarte key={d.uid} d={d} leg={leg} ancien />
+            ))}
+          </div>
+        </section>
       )}
 
       <section className="card space-y-3 p-5">
