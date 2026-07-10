@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import Link from "next/link";
 import { Nav } from "@/components/Nav";
+import { Footer } from "@/components/Footer";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -36,12 +37,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           </div>
         </header>
         <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-8">{children}</main>
-        <footer className="border-t border-[var(--border)] bg-[var(--surface)]">
-          <div className="mx-auto max-w-6xl px-5 py-6 text-sm text-[var(--muted)]">
-            Données : open data de l&apos;Assemblée nationale (Licence Ouverte Etalab). Projet
-            indépendant, non affilié à l&apos;Assemblée nationale.
-          </div>
-        </footer>
+        <Footer />
       </body>
     </html>
   );
