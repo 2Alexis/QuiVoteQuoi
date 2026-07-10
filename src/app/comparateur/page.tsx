@@ -11,7 +11,12 @@ import {
 } from "@/lib/db";
 import ComparateurClient, { type LegData, type CondamInfo } from "./ComparateurClient";
 
-export const dynamic = "force-dynamic";
+// Page identique pour tous les visiteurs : elle ne lit ni searchParams, ni
+// cookies, ni en-têtes, et ses données ne changent qu'au rebuild nocturne de la
+// base (qui redéclenche un déploiement). On la laisse donc en génération
+// STATIQUE (prérendue une fois au build) au lieu de la recalculer à chaque
+// requête : le gros payload (~1,25 Mo) n'est sérialisé qu'une seule fois, et
+// chaque visite est servie en HTML statique (~sous 100 ms au lieu de ~1,5 s).
 
 export default function ComparateurPage() {
   const legs = legislatures();
@@ -37,8 +42,10 @@ export default function ComparateurPage() {
       condamDeputes,
     };
   }
-  // Server Component rendu à la requête (force-dynamic) : cet instant est figé
-  // dans les props envoyées au client, donc identique à l'hydratation.
+  // Figé au build (page statique) et passé en props : sert uniquement à afficher
+  // la durée en ANNÉES des mandats présidentiels (ex. Macron), donc une fraîcheur
+  // « au dernier déploiement » suffit largement. Passer la valeur depuis le
+  // serveur garantit aussi une hydratation identique côté client.
   // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
   return <ComparateurClient legs={legs} data={data} now={now} />;
