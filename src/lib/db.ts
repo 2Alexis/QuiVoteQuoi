@@ -12,7 +12,8 @@ export function db(): Database.Database {
       readonly: true,
       fileMustExist: true,
     });
-    _db.pragma("journal_mode = WAL");
+    // Pas de `journal_mode = WAL` ici : c'est une écriture, impossible sur une
+    // base en lecture seule (et inutile sans écriture concurrente).
   }
   return _db;
 }
