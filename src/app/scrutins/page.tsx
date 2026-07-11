@@ -32,7 +32,7 @@ export default async function ScrutinsPage({
   const page = parseInt(sp.page ?? "1", 10) || 1;
   const leg = sp.leg || DEFAULT_LEG;
   const categorie = sp.cat || undefined;
-  const loisOnly = sp.loi === "1";
+  const loisOnly = sp.loi !== "0";
   const includeBudget = sp.budget !== "0";
   const { rows, total, pages } = scrutins({
     search,
@@ -50,7 +50,7 @@ export default async function ScrutinsPage({
     u.set("leg", leg);
     if (search) u.set("q", search);
     if (categorie) u.set("cat", categorie);
-    if (loisOnly) u.set("loi", "1");
+    if (!loisOnly) u.set("loi", "0");
     if (loisOnly && !includeBudget) u.set("budget", "0");
     if (p > 1) u.set("page", String(p));
     return `?${u.toString()}`;
@@ -61,7 +61,7 @@ export default async function ScrutinsPage({
     u.set("leg", leg);
     if (search) u.set("q", search);
     if (c) u.set("cat", c);
-    if (loisOnly) u.set("loi", "1");
+    if (!loisOnly) u.set("loi", "0");
     if (loisOnly && !includeBudget) u.set("budget", "0");
     return `?${u.toString()}`;
   };
@@ -72,8 +72,9 @@ export default async function ScrutinsPage({
     if (search) u.set("q", search);
     if (categorie) u.set("cat", categorie);
     if (on) {
-      u.set("loi", "1");
       if (!includeBudget) u.set("budget", "0");
+    } else {
+      u.set("loi", "0");
     }
     return `?${u.toString()}`;
   };
@@ -83,7 +84,6 @@ export default async function ScrutinsPage({
     u.set("leg", leg);
     if (search) u.set("q", search);
     if (categorie) u.set("cat", categorie);
-    u.set("loi", "1");
     if (!on) u.set("budget", "0");
     return `?${u.toString()}`;
   };
@@ -103,7 +103,7 @@ export default async function ScrutinsPage({
       <form className="flex gap-2" action="/scrutins">
         <input type="hidden" name="leg" value={leg} />
         {categorie && <input type="hidden" name="cat" value={categorie} />}
-        {loisOnly && <input type="hidden" name="loi" value="1" />}
+        {!loisOnly && <input type="hidden" name="loi" value="0" />}
         {loisOnly && !includeBudget && <input type="hidden" name="budget" value="0" />}
         <input
           name="q"

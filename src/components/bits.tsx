@@ -224,7 +224,7 @@ export function CategorieVotesList({
         (pour / contre / abstention), tous textes confondus.{" "}
         <span className="font-medium text-[var(--foreground)]">Barre du bas</span> : orientation,
         calculée uniquement sur les textes clairement marqués à gauche ou à droite — voter{" "}
-        <em>contre</em> un texte d&apos;un pôle compte comme un point vers le pôle opposé.
+        <em>contre</em>{" "}un texte d&apos;un pôle compte comme un point vers le pôle opposé.
       </p>
       {rows.map((r) => {
         const exp = r.pour + r.contre + r.abstention || 1;
@@ -290,7 +290,7 @@ export function GroupeAccords({
   return (
     <div className="space-y-3">
       <p className="text-xs leading-relaxed text-[var(--muted)]">
-        Part des scrutins où <b className="text-[var(--foreground)]">{me}</b> a adopté la même
+        Part des scrutins où <b className="text-[var(--foreground)]">{me}</b>{" "}a adopté la même
         position majoritaire que chaque autre groupe. Taux élevé = les deux blocs votent ensemble ;
         taux faible = ils s&apos;opposent.
       </p>
@@ -409,9 +409,7 @@ export function Hemicycle({
         return (
           <Link key={g.uid} href={`/groupes/${g.uid}`}>
             <path d={d} fill={color} stroke="var(--surface)" strokeWidth={1.5}>
-              <title>
-                {g.libelle} · {g.n} sièges
-              </title>
+              <title>{`${g.libelle} · ${g.n} sièges`}</title>
             </path>
             {big && (
               <text
@@ -524,9 +522,7 @@ export function HemicycleVote({
       return (
         <Link key={`${verb}-${d.g.groupe_uid}`} href={`/groupes/${d.g.groupe_uid}`}>
           <path d={path} fill={color} stroke="var(--surface)" strokeWidth={1.5}>
-            <title>
-              {d.g.libelle ?? d.g.abrege} · {d.n} {verb}
-            </title>
+            <title>{`${d.g.libelle ?? d.g.abrege} · ${d.n} ${verb}`}</title>
           </path>
           {big && (
             <text

@@ -22,6 +22,7 @@ import {
   CondamnationsGroupe,
 } from "@/components/bits";
 import { GroupLogo } from "@/components/GroupLogo";
+import { ScrutinCard } from "@/components/ScrutinCard";
 
 export const dynamic = "force-dynamic";
 
@@ -156,53 +157,42 @@ export default async function GroupeDetail({
           </div>
         </div>
         <div className="card overflow-hidden">
-          <table className="data">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Scrutin</th>
-                <th>Thème</th>
-                <th>Orientation</th>
-                <th>Position</th>
-                <th className="text-right">P / C / A</th>
-              </tr>
-            </thead>
-            <tbody>
-              {scrutinsList.map((s) => (
-                <tr key={s.uid}>
-                  <td className="whitespace-nowrap text-[var(--muted)]">{formatDate(s.date)}</td>
-                  <td>
-                    <Link href={`/scrutins/${s.uid}`} className="link-accent">
-                      {s.titre}
-                    </Link>
-                  </td>
-                  <td>
+          <div className="divide-y divide-[var(--border)]">
+            {scrutinsList.map((s) => (
+              <Link
+                key={s.uid}
+                href={`/scrutins/${s.uid}`}
+                className="block p-4 transition-colors hover:bg-[var(--background)]"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs text-[var(--muted)]">{formatDate(s.date)}</span>
+                  <span className="whitespace-nowrap text-xs text-[var(--muted)]">
+                    {s.pour} / {s.contre} / {s.abstention}
+                  </span>
+                </div>
+                <div className="mt-1 flex items-start justify-between gap-3">
+                  <ScrutinCard titre={s.titre} className="min-w-0 flex-1" />
+                  <div className="flex shrink-0 flex-wrap justify-end gap-1">
                     <CategoriePill categorie={s.categorie} />
-                  </td>
-                  <td>
                     <OrientationPill
                       categorie={s.categorie}
                       orientation={s.orientation}
                       score={s.orientation_score}
                     />
-                  </td>
-                  <td>
-                    <PositionPill position={s.majorite} />
-                  </td>
-                  <td className="whitespace-nowrap text-right text-xs text-[var(--muted)]">
-                    {s.pour} / {s.contre} / {s.abstention}
-                  </td>
-                </tr>
-              ))}
-              {scrutinsList.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="p-6 text-center text-sm text-[var(--muted)]">
-                    Aucun scrutin pour ce filtre.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                  </div>
+                </div>
+                <div className="mt-2 flex items-center gap-2 text-xs text-[var(--muted)]">
+                  <span>Position du groupe :</span>
+                  <PositionPill position={s.majorite} />
+                </div>
+              </Link>
+            ))}
+            {scrutinsList.length === 0 && (
+              <div className="p-6 text-center text-sm text-[var(--muted)]">
+                Aucun scrutin pour ce filtre.
+              </div>
+            )}
+          </div>
           {scrutinsTotal > scrutinsList.length && (
             <div className="border-t border-[var(--border)] p-3 text-center text-xs text-[var(--muted)]">
               Aperçu des {scrutinsList.length} plus récents ·{" "}

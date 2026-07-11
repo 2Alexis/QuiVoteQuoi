@@ -3,6 +3,7 @@ import Link from "next/link";
 import { stats, compositionActuelle, scrutins } from "@/lib/db";
 import { formatNumber, formatDate, sortBadge, groupBloc } from "@/lib/ui";
 import { GroupBadge, VoteBar, Hemicycle } from "@/components/bits";
+import { ScrutinCard } from "@/components/ScrutinCard";
 
 export const dynamic = "force-static";
 
@@ -156,7 +157,7 @@ export default function Home() {
                     </span>
                     <span className={`badge ${b.cls}`}>{b.label}</span>
                   </div>
-                  <div className="mt-1 line-clamp-2 text-sm font-medium">{sc.titre}</div>
+                  <ScrutinCard titre={sc.titre} className="mt-1" />
                   <div className="mt-2 flex items-center gap-3">
                     <VoteBar
                       pour={sc.pour ?? 0}

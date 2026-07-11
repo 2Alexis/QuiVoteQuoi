@@ -52,6 +52,40 @@ export default async function ScrutinDetail({ params }: { params: Promise<{ uid:
   const byDep = new Map(nominatifs.map((n) => [n.acteur_uid, n]));
   void byDep;
 
+  const renderGroupeRow = (g: (typeof vent)[number]) => {
+    const tot = g.pour + g.contre + g.abstention;
+    const maj =
+      g.pour >= g.contre && g.pour >= g.abstention
+        ? "pour"
+        : g.contre >= g.abstention
+        ? "contre"
+        : "abstention";
+    return (
+      <div key={g.groupe_uid} className="p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <GroupBadge abrege={g.abrege} libelle={g.libelle} uid={g.groupe_uid} />
+            <span className="text-sm text-[var(--muted)] hidden sm:inline">{g.libelle}</span>
+          </div>
+          <span
+            className="text-xs font-semibold"
+            style={{ color: POSITION_COLOR[maj as keyof typeof POSITION_COLOR] }}
+          >
+            majorité {maj}
+          </span>
+        </div>
+        <div className="mt-2 flex items-center gap-3">
+          <div className="max-w-md flex-1">
+            <VoteBar pour={g.pour} contre={g.contre} abstention={g.abstention} />
+          </div>
+          <span className="whitespace-nowrap text-xs text-[var(--muted)]">
+            {g.pour} / {g.contre} / {g.abstention} · {tot} votants
+          </span>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-8">
       <div>
@@ -123,41 +157,20 @@ export default async function ScrutinDetail({ params }: { params: Promise<{ uid:
           <HemicycleVote groupes={vent} />
         </div>
         <div className="card divide-y divide-[var(--border)]">
-          {vent.map((g) => {
-            const tot = g.pour + g.contre + g.abstention;
-            const maj =
-              g.pour >= g.contre && g.pour >= g.abstention
-                ? "pour"
-                : g.contre >= g.abstention
-                ? "contre"
-                : "abstention";
-            return (
-              <div key={g.groupe_uid} className="p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <GroupBadge abrege={g.abrege} libelle={g.libelle} uid={g.groupe_uid} />
-                    <span className="text-sm text-[var(--muted)] hidden sm:inline">
-                      {g.libelle}
-                    </span>
-                  </div>
-                  <span
-                    className="text-xs font-semibold"
-                    style={{ color: POSITION_COLOR[maj as keyof typeof POSITION_COLOR] }}
-                  >
-                    majorité {maj}
-                  </span>
-                </div>
-                <div className="mt-2 flex items-center gap-3">
-                  <div className="max-w-md flex-1">
-                    <VoteBar pour={g.pour} contre={g.contre} abstention={g.abstention} />
-                  </div>
-                  <span className="whitespace-nowrap text-xs text-[var(--muted)]">
-                    {g.pour} / {g.contre} / {g.abstention} · {tot} votants
-                  </span>
-                </div>
+          {vent.slice(0, 3).map(renderGroupeRow)}
+          {vent.length > 3 && (
+            <details className="group">
+              <summary className="cursor-pointer list-none p-4 text-center text-sm font-medium text-[var(--muted)] hover:bg-[var(--background)] hover:text-[var(--foreground)]">
+                <span className="group-open:hidden">
+                  Voir les {vent.length - 3} autres groupes ▾
+                </span>
+                <span className="hidden group-open:inline">Réduire ▴</span>
+              </summary>
+              <div className="divide-y divide-[var(--border)]">
+                {vent.slice(3).map(renderGroupeRow)}
               </div>
-            );
-          })}
+            </details>
+          )}
         </div>
       </section>
 

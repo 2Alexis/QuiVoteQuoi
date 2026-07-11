@@ -243,17 +243,25 @@ export default async function DeputesPage({
           filtrer la liste.
         </p>
         {legende.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5">
-            {legende.map((l) => (
-              <span key={l.abrege} className="flex items-center gap-1.5 text-xs">
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-3">
+            <div className="mb-2 text-center text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">
+              Groupe majoritaire par département
+            </div>
+            <div className="flex flex-wrap justify-center gap-1.5">
+              {legende.map((l) => (
                 <span
-                  className="inline-block h-3 w-3 shrink-0 rounded-sm"
-                  style={{ background: groupColor(l.abrege) }}
-                />
-                <span className="font-medium">{l.abrege}</span>
-                <span className="text-[var(--muted)]">{l.libelle}</span>
-              </span>
-            ))}
+                  key={l.abrege}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1 text-xs"
+                >
+                  <span
+                    className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+                    style={{ background: groupColor(l.abrege) }}
+                  />
+                  <span className="font-semibold">{l.abrege}</span>
+                  <span className="text-[var(--muted)]">{l.libelle}</span>
+                </span>
+              ))}
+            </div>
           </div>
         )}
         {outreMer.length > 0 && (

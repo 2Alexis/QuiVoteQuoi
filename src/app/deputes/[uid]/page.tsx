@@ -20,6 +20,7 @@ import {
   OrientationPill,
   Condamnations,
 } from "@/components/bits";
+import { ScrutinCard } from "@/components/ScrutinCard";
 
 // Fiche d'un député : le rendu ne dépend que de l'uid (aucun searchParams) et les
 // données ne bougent qu'au rythme des ingestions (quotidiennes). On met donc la
@@ -158,49 +159,38 @@ export default async function DeputeDetail({ params }: { params: Promise<{ uid: 
           </Link>
         </div>
         <div className="card overflow-hidden">
-          <table className="data">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Scrutin</th>
-                <th>Thème</th>
-                <th>Orientation</th>
-                <th>Résultat</th>
-                <th>Vote</th>
-              </tr>
-            </thead>
-            <tbody>
-              {votes.map((v) => {
-                const b = sortBadge(v.sort_code);
-                return (
-                  <tr key={v.uid}>
-                    <td className="whitespace-nowrap text-[var(--muted)]">{formatDate(v.date)}</td>
-                    <td>
-                      <Link href={`/scrutins/${v.uid}`} className="link-accent">
-                        {v.titre}
-                      </Link>
-                    </td>
-                    <td>
+          <div className="divide-y divide-[var(--border)]">
+            {votes.map((v) => {
+              const b = sortBadge(v.sort_code);
+              return (
+                <Link
+                  key={v.uid}
+                  href={`/scrutins/${v.uid}`}
+                  className="block p-4 transition-colors hover:bg-[var(--background)]"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs text-[var(--muted)]">{formatDate(v.date)}</span>
+                    <span className={`badge ${b.cls}`}>{b.label}</span>
+                  </div>
+                  <div className="mt-1 flex items-start justify-between gap-3">
+                    <ScrutinCard titre={v.titre} className="min-w-0 flex-1" />
+                    <div className="flex shrink-0 flex-wrap justify-end gap-1">
                       <CategoriePill categorie={v.categorie} />
-                    </td>
-                    <td>
                       <OrientationPill
                         categorie={v.categorie}
                         orientation={v.orientation}
                         score={v.orientation_score}
                       />
-                    </td>
-                    <td>
-                      <span className={`badge ${b.cls}`}>{b.label}</span>
-                    </td>
-                    <td>
-                      <PositionPill position={v.position} />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                    </div>
+                  </div>
+                  <div className="mt-2 flex items-center gap-2 text-xs text-[var(--muted)]">
+                    <span>Son vote :</span>
+                    <PositionPill position={v.position} />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
           {votesTotal > votes.length && (
             <div className="border-t border-[var(--border)] p-3 text-center text-xs text-[var(--muted)]">
               Aperçu des {votes.length} plus récents ·{" "}
