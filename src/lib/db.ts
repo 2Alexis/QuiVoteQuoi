@@ -1053,3 +1053,62 @@ export function accordsDuGroupe(uid: string, leg = DEFAULT_LEG): AccordGroupe[] 
     )
     .all(leg, uid, leg) as AccordGroupe[];
 }
+
+export interface AccordDeputes {
+  commun: number; // scrutins où les DEUX se sont exprimés (pour/contre/abstention)
+  accord: number; // parmi eux, ceux où ils ont voté dans le même sens
+  taux: number | null; // accord / commun, ou null si aucun vote en commun
+}
+
+// Taux d'accord entre deux députés : proportion des scrutins où, TOUS DEUX ayant
+// exprimé un vote (on écarte les non-votants), ils ont voté dans le même sens.
+// On récupère les votes exprimés de chacun (requête indexée sur acteur_uid) puis
+// on intersecte par scrutin en mémoire — sûr quel que soit le volume, et le
+// `commun` renvoyé permet à l'UI de masquer un taux calculé sur trop peu de votes.
+export function accordDeputes(a: string, b: string, leg = DEFAULT_LEG): AccordDeputes {
+  if (!a || !b || a === b) return { commun: 0, accord: 0, taux: null };
+  const q = db().prepare(
+    `SELECT v.scrutin_uid uid, v.position position
+       FROM votes v JOIN scrutins s ON s.uid = v.scrutin_uid
+      WHERE v.acteur_uid = ? AND s.legislature = ?
+        AND v.position IN ('pour','contre','abstention')`
+  );
+  const posA = new Map<string, string>();
+  for (const r of q.all(a, leg) as { uid: string; position: string }[]) posA.set(r.uid, r.position);
+  let commun = 0;
+  let accord = 0;
+  for (const r of q.all(b, leg) as { uid: string; position: string }[]) {
+    const pa = posA.get(r.uid);
+    if (pa === undefined) continue;
+    commun += 1;
+    if (pa === r.position) accord += 1;
+  }
+  return { commun, accord, taux: commun ? accord / commun : null };
+}
+
+// --- Sitemap : énumération légère des entités indexables ---------------------
+// Une URL par entité ayant une page de détail. On dédoublonne les députés/groupes
+// (présents sur plusieurs législatures) via mandats ; les scrutins portent leur
+// date pour alimenter `lastmod`.
+export function sitemapDeputes(): { uid: string }[] {
+  return db()
+    .prepare("SELECT DISTINCT uid FROM mandats ORDER BY uid")
+    .all() as { uid: string }[];
+}
+
+export function sitemapScrutins(): { uid: string; date: string }[] {
+  return db()
+    .prepare("SELECT uid, date FROM scrutins ORDER BY date DESC")
+    .all() as { uid: string; date: string }[];
+}
+
+export function sitemapGroupes(): { uid: string }[] {
+  return db()
+    .prepare(
+      `SELECT DISTINCT m.groupe_uid uid
+         FROM mandats m JOIN organes o ON o.uid = m.groupe_uid
+        WHERE o.code_type = 'GP' AND m.groupe_uid IS NOT NULL
+        ORDER BY m.groupe_uid`
+    )
+    .all() as { uid: string }[];
+}

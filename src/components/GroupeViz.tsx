@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { groupColor } from "@/lib/ui";
+import { TETES_AFFICHE, normNom } from "@/lib/figures";
 
 // Visualisations de groupes réutilisables (cartographie MDS, cohésion interne,
 // têtes d'affiche). Composants serveur : rendu pur, sans interactivité.
@@ -21,30 +22,6 @@ export interface DeputeFig {
 }
 
 const pct = (v: number) => `${Math.round(v * 100)}%`;
-
-// Figures connues par groupe (abrégé). Résolues contre les membres réels de la
-// législature : un nom absent de la base pour la législature choisie n'apparaît pas.
-const TETES_AFFICHE: Record<string, string[]> = {
-  RN: ["Marine Le Pen", "Sébastien Chenu", "Jean-Philippe Tanguy", "Laure Lavalette"],
-  UDR: ["Éric Ciotti"],
-  "LFI-NFP": ["Mathilde Panot", "Éric Coquerel", "Manuel Bompard", "Clémence Guetté"],
-  SOC: ["Boris Vallaud", "Olivier Faure", "Jérôme Guedj"],
-  EcoS: ["Cyrielle Chatelain", "Sandrine Rousseau"],
-  GDR: ["André Chassaigne", "Stéphane Peu"],
-  DR: ["Laurent Wauquiez", "Annie Genevard"],
-  EPR: ["Gabriel Attal", "Sylvain Maillard", "Aurore Bergé"],
-  Dem: ["Jean-Paul Mattei", "Erwan Balanant"],
-  HOR: ["Laurent Marcangeli", "Naïma Moutchou"],
-  LIOT: ["Charles de Courson", "Bertrand Pancher"],
-};
-
-const normNom = (s: string) =>
-  s
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z]+/g, " ")
-    .trim();
 
 export function MdsMap({ positions }: { positions: GroupePos[] }) {
   const W = 480;

@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { PRESIDENTS, dureeAnnees, type President } from "@/data/presidents";
-import { groupColor, ORIENTATION_POLES } from "@/lib/ui";
+import { groupColor, groupOrder, ORIENTATION_POLES } from "@/lib/ui";
+import { FIGURES_SET, normNom } from "@/lib/figures";
 
 export interface DeputeCompareC {
   uid: string;
@@ -387,6 +388,111 @@ function Presidents({ now }: { now: number }) {
 
 // ---- Onglet Députés ----
 
+// Seuil de fiabilité : en deçà de ce nombre de votes exprimés, les taux d'un
+// député (loyauté, alignement, orientation) reposent sur trop peu d'observations
+// pour être lus au sérieux — on le signale visiblement dans sa colonne.
+const SEUIL_FAIBLE = 100;
+
+// Figures connues présentes dans la liste, dédoublonnées et triées gauche→droite
+// (ordre de l'hémicycle). Alimente le défaut et les préréglages du comparateur.
+function figuresDe(deputes: DeputeCompareC[]): DeputeCompareC[] {
+  const seen = new Set<string>();
+  const out: DeputeCompareC[] = [];
+  for (const d of deputes) {
+    if (!d.abrege || seen.has(d.uid)) continue;
+    if (!FIGURES_SET.has(normNom(`${d.prenom} ${d.nom}`))) continue;
+    seen.add(d.uid);
+    out.push(d);
+  }
+  return out.sort((a, b) => groupOrder(a.abrege) - groupOrder(b.abrege));
+}
+
+// Défaut « parlant » : la figure la plus à gauche face à la plus à droite, au
+// lieu des deux premiers noms alphabétiques (première impression sans intérêt).
+function defautParlant(deputes: DeputeCompareC[]): [string, string] {
+  const figs = figuresDe(deputes);
+  if (figs.length >= 2) return [figs[0].uid, figs[figs.length - 1].uid];
+  return [deputes[0]?.uid ?? "", deputes[1]?.uid ?? ""];
+}
+
+// En deçà de ce nombre de scrutins en commun, le taux d'accord entre deux députés
+// repose sur trop peu d'observations : on l'affiche grisé, assorti d'un avertissement.
+const SEUIL_COMMUN = 50;
+
+interface AccordData {
+  commun: number;
+  accord: number;
+  taux: number | null;
+}
+
+// Carte « chiffre-choc » : le taux d'accord de vote entre les deux députés
+// sélectionnés, avec le nombre de scrutins réellement communs et un garde-fou de
+// significativité — le pourcentage est neutralisé (grisé) sous le seuil.
+function FaceAFace({
+  a,
+  b,
+  data,
+  loading,
+}: {
+  a: DeputeCompareC;
+  b: DeputeCompareC;
+  data: AccordData | null;
+  loading: boolean;
+}) {
+  const colorA = groupColor(a.abrege);
+  const colorB = groupColor(b.abrege);
+  const fiable = !!data && data.taux != null && data.commun >= SEUIL_COMMUN;
+  return (
+    <div className="card p-5 text-center">
+      <div className="text-xs uppercase tracking-wide text-[var(--muted)]">Accord de vote</div>
+      <div className="mt-1 flex flex-wrap items-center justify-center gap-y-0.5 text-sm font-semibold">
+        <span style={{ color: colorA }}>
+          {a.prenom} {a.nom}
+        </span>
+        <span className="mx-1.5 lowercase italic text-[var(--muted)]">vs</span>
+        <span style={{ color: colorB }}>
+          {b.prenom} {b.nom}
+        </span>
+      </div>
+
+      {loading ? (
+        <div className="mt-3 text-sm text-[var(--muted)]">Calcul…</div>
+      ) : !data || data.taux == null || data.commun === 0 ? (
+        <div className="mt-3 text-sm text-[var(--muted)]">
+          Aucun scrutin où les deux se sont exprimés sur cette législature.
+        </div>
+      ) : (
+        <>
+          <div
+            className="stat-num mt-2 text-5xl font-bold"
+            style={{ color: fiable ? undefined : "var(--muted)" }}
+          >
+            {pct(data.taux)}
+          </div>
+          <div className="mx-auto mb-1 mt-3 h-2 max-w-xs overflow-hidden rounded-full bg-[var(--border)]">
+            <div
+              className="h-full rounded-full"
+              style={{ width: `${data.taux * 100}%`, background: "var(--accent)" }}
+            />
+          </div>
+          <div className="text-xs text-[var(--muted)]">
+            sur <span className="stat-num font-semibold">{data.commun.toLocaleString("fr-FR")}</span>{" "}
+            scrutins où les deux se sont exprimés
+          </div>
+          {!fiable && (
+            <p
+              className="mx-auto mt-2 max-w-sm text-[11px] font-medium leading-snug"
+              style={{ color: "#9A6700" }}
+            >
+              Trop peu de votes en commun pour un score fiable — à interpréter avec prudence.
+            </p>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 function Metric({
   label,
   value,
@@ -483,6 +589,15 @@ function ColonneDepute({
               </Link>
               <div className="text-sm text-[var(--muted)]">{d.abrege ?? "Non inscrit"}</div>
             </div>
+            {d.n_exprime < SEUIL_FAIBLE && (
+              <p
+                className="rounded-md px-2 py-1 text-[11px] font-medium leading-snug"
+                style={{ color: "#9A6700", background: "#E7A1001f" }}
+              >
+                Échantillon faible : {d.n_exprime} votes exprimés — les taux ci-dessous sont peu
+                fiables.
+              </p>
+            )}
             <div className="space-y-2.5">
               <Metric
                 label="Participation"
@@ -547,10 +662,43 @@ function ColonneDepute({
 function Deputes({ legs, data }: { legs: string[]; data: Record<string, LegData> }) {
   const [leg, setLeg] = useState(legs[0]);
   const deputes = data[leg].deputes;
+  const positions = data[leg].positions;
   const orientDeputes = data[leg].orientDeputes;
   const condamDeputes = data[leg].condamDeputes;
-  const [a, setA] = useState(deputes[0]?.uid ?? "");
-  const [b, setB] = useState(deputes[1]?.uid ?? "");
+  const [a, setA] = useState(() => defautParlant(deputes)[0]);
+  const [b, setB] = useState(() => defautParlant(deputes)[1]);
+  // Résultat d'accord « estampillé » de la paire (a,b,leg) qui l'a produit. On en
+  // dérive l'état de chargement (calcul en cours tant que l'estampille ne colle pas
+  // à la sélection courante), ce qui évite tout setState synchrone dans l'effet —
+  // donc pas de rendu en cascade.
+  const [accordRes, setAccordRes] = useState<{
+    a: string;
+    b: string;
+    leg: string;
+    data: AccordData | null;
+  } | null>(null);
+
+  // Charge à la volée le taux d'accord de la paire courante (route lecture seule).
+  // `annule` évite qu'une réponse tardive n'écrase une sélection plus récente.
+  useEffect(() => {
+    if (!a || !b || a === b) return;
+    let annule = false;
+    fetch(
+      `/api/accord-deputes?leg=${encodeURIComponent(leg)}&a=${encodeURIComponent(
+        a
+      )}&b=${encodeURIComponent(b)}`
+    )
+      .then((r) => (r.ok ? (r.json() as Promise<AccordData>) : null))
+      .then((data) => {
+        if (!annule) setAccordRes({ a, b, leg, data });
+      })
+      .catch(() => {
+        if (!annule) setAccordRes({ a, b, leg, data: null });
+      });
+    return () => {
+      annule = true;
+    };
+  }, [a, b, leg]);
 
   const groupesDispo = useMemo(
     () =>
@@ -574,16 +722,102 @@ function Deputes({ legs, data }: { legs: string[]; data: Record<string, LegData>
       .map(([cat]) => cat);
   }, [a, b, orientDeputes]);
 
+  // Préréglages « clic-et-compare » : chaque puce arme d'un coup les deux colonnes
+  // sur un duel intéressant, pour guider vers des comparaisons pertinentes plutôt
+  // que de laisser l'utilisateur face à deux noms pris au hasard de l'alphabet.
+  const presets = useMemo(() => {
+    const figs = figuresDe(deputes);
+    const list: { id: string; label: string; pair: [string, string] }[] = [];
+    if (figs.length >= 2) {
+      list.push({
+        id: "gd",
+        label: "Gauche ⇄ droite",
+        pair: [figs[0].uid, figs[figs.length - 1].uid],
+      });
+    }
+    // Une figure (ou, à défaut, le membre le plus actif) d'un groupe donné.
+    const pick = (abrege: string): string | null => {
+      const f = figs.find((d) => d.abrege === abrege);
+      if (f) return f.uid;
+      const membres = deputes
+        .filter((d) => d.abrege === abrege)
+        .sort((x, y) => y.n_exprime - x.n_exprime);
+      return membres[0]?.uid ?? null;
+    };
+    const [g1, g2] = positions; // positionsGroupes() trie par effectif décroissant
+    if (g1?.abrege && g2?.abrege) {
+      const p1 = pick(g1.abrege);
+      const p2 = pick(g2.abrege);
+      if (p1 && p2 && p1 !== p2) {
+        list.push({ id: "pl", label: "Deux poids lourds", pair: [p1, p2] });
+      }
+    }
+    return list;
+  }, [deputes, positions]);
+
+  // Tirage aléatoire (dans un gestionnaire d'événement, donc sans risque
+  // d'hydratation) : deux figures distinctes, pour la découverte.
+  const surprise = () => {
+    const figs = figuresDe(deputes);
+    const pool = figs.length >= 2 ? figs : deputes;
+    if (pool.length < 2) return;
+    const i = Math.floor(Math.random() * pool.length);
+    let j = Math.floor(Math.random() * pool.length);
+    while (j === i) j = Math.floor(Math.random() * pool.length);
+    setA(pool[i].uid);
+    setB(pool[j].uid);
+  };
+
   const onLeg = (l: string) => {
     setLeg(l);
-    const ds = data[l].deputes;
-    setA(ds[0]?.uid ?? "");
-    setB(ds[1]?.uid ?? "");
+    const [na, nb] = defautParlant(data[l].deputes);
+    setA(na);
+    setB(nb);
   };
+
+  const armed = (pair: [string, string]) =>
+    (pair[0] === a && pair[1] === b) || (pair[0] === b && pair[1] === a);
+
+  const dA = deputes.find((x) => x.uid === a);
+  const dB = deputes.find((x) => x.uid === b);
+  const accordPret = accordRes?.a === a && accordRes?.b === b && accordRes?.leg === leg;
+  const accordData = accordPret ? accordRes?.data ?? null : null;
 
   return (
     <div className="space-y-4">
       <LegTabs legs={legs} current={leg} onChange={onLeg} data={data} />
+
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium text-[var(--muted)]">Comparaisons suggérées :</span>
+        {presets.map((p) => (
+          <button
+            key={p.id}
+            onClick={() => {
+              setA(p.pair[0]);
+              setB(p.pair[1]);
+            }}
+            aria-pressed={armed(p.pair)}
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+              armed(p.pair)
+                ? "border-[var(--accent)] bg-[var(--accent)] text-white"
+                : "border-[var(--border)] text-[var(--muted)] hover:border-[var(--accent)]"
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
+        <button
+          onClick={surprise}
+          className="rounded-full border border-[var(--border)] px-3 py-1 text-xs font-medium text-[var(--muted)] transition-colors hover:border-[var(--accent)]"
+        >
+          Au hasard
+        </button>
+      </div>
+
+      {dA && dB && a !== b && (
+        <FaceAFace a={dA} b={dB} data={accordData} loading={!accordPret} />
+      )}
+
       <div className="grid gap-4 md:grid-cols-2">
         <ColonneDepute
           value={a}
