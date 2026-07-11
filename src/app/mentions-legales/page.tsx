@@ -7,12 +7,6 @@ export const metadata: Metadata = {
     "Mentions légales du site QuiVoteQuoi : éditeur, hébergeur, sources des données et propriété intellectuelle.",
 };
 
-// NOTE ÉDITEUR : remplacez les champs entre crochets [ ... ] par vos
-// informations réelles (nom / raison sociale, e-mail de contact, et le cas
-// échéant l'adresse). L'identification de l'éditeur est une obligation légale
-// (art. 6 III de la loi n° 2004-575 du 21 juin 2004 pour la confiance dans
-// l'économie numérique).
-
 export default function MentionsLegalesPage() {
   return (
     <article className="mx-auto max-w-3xl space-y-8">
@@ -25,9 +19,9 @@ export default function MentionsLegalesPage() {
         <h2 className="text-lg font-semibold">Éditeur du site</h2>
         <p className="text-sm leading-relaxed text-[var(--muted)]">
           Le site <strong>QuiVoteQuoi</strong> est édité à titre personnel et non commercial par
-          [Nom ou raison sociale de l’éditeur]. Contact :{" "}
-          <a href="mailto:[adresse e-mail de contact]" className="text-[var(--accent)] hover:underline">
-            [adresse e-mail de contact]
+          Alexis Clerc. Contact :{" "}
+          <a href="mailto:alexisclerc22@gmail.com" className="text-[var(--accent)] hover:underline">
+            alexisclerc22@gmail.com
           </a>
           .
         </p>
@@ -36,7 +30,7 @@ export default function MentionsLegalesPage() {
       <section className="space-y-2">
         <h2 className="text-lg font-semibold">Directeur de la publication</h2>
         <p className="text-sm leading-relaxed text-[var(--muted)]">
-          [Nom du directeur de la publication], en sa qualité d’éditeur du site.
+          Alexis Clerc, en sa qualité d’éditeur du site.
         </p>
       </section>
 
@@ -108,8 +102,8 @@ export default function MentionsLegalesPage() {
         <h2 className="text-lg font-semibold">Contact</h2>
         <p className="text-sm leading-relaxed text-[var(--muted)]">
           Pour toute question, signalement d’erreur ou demande concernant vos données, écrivez à{" "}
-          <a href="mailto:[adresse e-mail de contact]" className="text-[var(--accent)] hover:underline">
-            [adresse e-mail de contact]
+          <a href="mailto:alexisclerc22@gmail.com" className="text-[var(--accent)] hover:underline">
+            alexisclerc22@gmail.com
           </a>
           .
         </p>

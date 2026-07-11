@@ -11,6 +11,7 @@ import {
   accordsDuGroupe,
   legislatureDuGroupe,
   condamnationsDuGroupe,
+  statsGroupe,
 } from "@/lib/db";
 import { formatDate } from "@/lib/ui";
 import {
@@ -20,6 +21,7 @@ import {
   OrientationPill,
   GroupeAccords,
   CondamnationsGroupe,
+  MetricRing,
 } from "@/components/bits";
 import { GroupLogo } from "@/components/GroupLogo";
 import { ScrutinCard } from "@/components/ScrutinCard";
@@ -58,6 +60,7 @@ export default async function GroupeDetail({
   const g = groupe(uid);
   if (!g) notFound();
   const leg = legislatureDuGroupe(uid);
+  const gstats = statsGroupe(uid, leg);
   const membres = deputesDuGroupe(uid);
   const parCategorie = votesGroupeParCategorie(uid);
   const SCRUTINS_APERCU = 20;
@@ -98,6 +101,31 @@ export default async function GroupeDetail({
           </div>
         </div>
       </div>
+
+      {(gstats.cohesion > 0 || gstats.participation > 0) && (
+        <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <MetricRing
+            label="Cohésion interne"
+            value={gstats.cohesion}
+            hint="Part des membres suivant la position majoritaire du groupe, en moyenne"
+          />
+          <MetricRing
+            label="Participation moyenne"
+            value={gstats.participation}
+            hint="Part des scrutins où les membres ont voté, en moyenne"
+          />
+          <MetricRing
+            label="Alignement présidentiel"
+            value={gstats.align}
+            hint="Vote comme le bloc présidentiel"
+          />
+          <MetricRing
+            label="Alignement (votes clivants)"
+            value={gstats.alignClivant}
+            hint="Hors votes quasi-unanimes"
+          />
+        </section>
+      )}
 
       {parCategorie.length > 0 && (
         <section className="space-y-3">

@@ -51,49 +51,56 @@ function OrientationLean({
 }) {
   const [gauche, droite] = ORIENTATION_POLES[categorie] ?? ORIENTATION_DEFAULT;
   const tot = gaucheN + droiteN;
-  if (tot === 0) {
-    return (
-      <div className="mt-1 text-[11px] text-[var(--muted)]">
-        Pas d&apos;orientation marquée : ces textes ne penchent nettement vers aucun des deux pôles.
-      </div>
-    );
-  }
-  const dp = droiteN / tot; // part « droite »
-  const versDroite = dp >= 0.5;
-  const share = versDroite ? dp : 1 - dp;
-  const pole = versDroite ? droite : gauche;
-  const poleColor = versDroite ? POLE_DROITE_COLOR : POLE_GAUCHE_COLOR;
-  const partage = share < 0.6; // ni l'un ni l'autre ne domine
+  const dp = tot ? droiteN / tot : 0.5; // part « droite »
+  const leansDroite = dp > 0.5;
+  const share = leansDroite ? dp : 1 - dp;
+  const partage = tot === 0 || share < 0.6; // ni l'un ni l'autre ne domine
+  const pole = leansDroite ? droite : gauche;
+  const poleColor = partage ? "#8A96A3" : leansDroite ? POLE_DROITE_COLOR : POLE_GAUCHE_COLOR;
+  // Position du curseur sur l'axe gauche↔droite, bornée pour rester visible.
+  const pos = Math.max(0.05, Math.min(0.95, dp));
   return (
-    <div className="mt-1.5">
-      <div className="flex h-2 w-full overflow-hidden rounded">
-        <div style={{ width: `${(1 - dp) * 100}%`, background: POLE_GAUCHE_COLOR }} />
-        <div style={{ width: `${dp * 100}%`, background: POLE_DROITE_COLOR }} />
+    <div>
+      <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">
+        Orientation
       </div>
-      <div className="mt-0.5 flex justify-between text-[10px] text-[var(--muted)]">
-        <span>
-          {gauche} · {Math.round((1 - dp) * 100)}%
-        </span>
-        <span>
-          {Math.round(dp * 100)}% · {droite}
-        </span>
-      </div>
-      <div className="mt-1 text-[11px]">
-        {partage ? (
-          <span className="text-[var(--muted)]">
-            Partagé entre «&nbsp;{gauche}&nbsp;» et «&nbsp;{droite}&nbsp;».
-          </span>
-        ) : (
-          <>
-            <span className="text-[var(--muted)]">Penche vers </span>
-            <b style={{ color: poleColor }}>« {pole} »</b>
-            <span className="text-[var(--muted)]">
-              {" "}
-              ({Math.round(share * 100)}% des votes sur des textes orientés)
-            </span>
-          </>
-        )}
-      </div>
+      {tot === 0 ? (
+        <p className="text-xs leading-snug text-[var(--muted)]">
+          Aucun texte clairement marqué à gauche ou à droite sur ce thème.
+        </p>
+      ) : (
+        <>
+          <div
+            className="relative h-2.5 w-full rounded-full"
+            style={{
+              background: `linear-gradient(90deg, ${POLE_GAUCHE_COLOR} 0%, #E8EBEF 50%, ${POLE_DROITE_COLOR} 100%)`,
+            }}
+            role="img"
+            aria-label={`Orientation : ${Math.round((1 - dp) * 100)} % « ${gauche} », ${Math.round(
+              dp * 100
+            )} % « ${droite} »`}
+          >
+            <span
+              className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow"
+              style={{ left: `${pos * 100}%`, background: poleColor }}
+            />
+          </div>
+          <div className="mt-1.5 flex justify-between gap-3 text-[11px] leading-tight text-[var(--muted)]">
+            <span className="max-w-[46%]">{gauche}</span>
+            <span className="max-w-[46%] text-right">{droite}</span>
+          </div>
+          <p className="mt-1.5 text-xs leading-snug text-[var(--muted)]">
+            {partage ? (
+              <>Partagé entre «&nbsp;{gauche}&nbsp;» et «&nbsp;{droite}&nbsp;».</>
+            ) : (
+              <>
+                Penche vers <b style={{ color: poleColor }}>«&nbsp;{pole}&nbsp;»</b> (
+                {Math.round(share * 100)}%).
+              </>
+            )}
+          </p>
+        </>
+      )}
     </div>
   );
 }
@@ -170,6 +177,43 @@ export function VoteBar({
   );
 }
 
+// Jauge circulaire d'un indicateur en pourcentage (participation, cohésion,
+// alignement…) : plus lisible et accrocheuse qu'une simple barre, partagée entre
+// les fiches député et groupe. Quatre cartes tiennent en 2×2 sans « trou ».
+export function MetricRing({ label, value, hint }: { label: string; value: number; hint: string }) {
+  const v = Math.max(0, Math.min(1, value));
+  const R = 26;
+  const C = 2 * Math.PI * R;
+  const off = C * (1 - v);
+  return (
+    <div className="card flex items-center gap-4 p-4">
+      <div className="relative h-16 w-16 shrink-0">
+        <svg viewBox="0 0 64 64" className="h-full w-full -rotate-90">
+          <circle cx="32" cy="32" r={R} fill="none" stroke="var(--border)" strokeWidth="7" />
+          <circle
+            cx="32"
+            cy="32"
+            r={R}
+            fill="none"
+            stroke="var(--accent)"
+            strokeWidth="7"
+            strokeLinecap="round"
+            strokeDasharray={C}
+            strokeDashoffset={off}
+          />
+        </svg>
+        <span className="stat-num absolute inset-0 flex items-center justify-center text-sm font-bold">
+          {Math.round(v * 100)}%
+        </span>
+      </div>
+      <div className="min-w-0">
+        <div className="text-sm font-semibold leading-tight">{label}</div>
+        <div className="mt-1 text-[11px] leading-snug text-[var(--muted)]">{hint}</div>
+      </div>
+    </div>
+  );
+}
+
 export function LegSwitcher({
   current,
   base,
@@ -180,23 +224,29 @@ export function LegSwitcher({
   legislatures: string[];
 }) {
   return (
-    <div className="inline-flex overflow-hidden rounded-lg border border-[var(--border)] text-sm">
-      {legislatures.map((l) => {
-        const active = l === current;
-        return (
-          <Link
-            key={l}
-            href={`${base}?leg=${l}`}
-            className={`px-3 py-1.5 font-medium ${
-              active
-                ? "bg-[var(--accent)] text-white"
-                : "bg-[var(--surface)] text-[var(--muted)] hover:text-[var(--foreground)]"
-            }`}
-          >
-            {l}<sup>e</sup>
-          </Link>
-        );
-      })}
+    <div className="inline-flex items-center gap-2">
+      <span className="text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
+        Législature
+      </span>
+      <div className="inline-flex overflow-hidden rounded-lg border border-[var(--border)] text-sm">
+        {legislatures.map((l) => {
+          const active = l === current;
+          return (
+            <Link
+              key={l}
+              href={`${base}?leg=${l}`}
+              className={`px-3 py-1.5 font-medium ${
+                active
+                  ? "bg-[var(--accent)] text-white"
+                  : "bg-[var(--surface)] text-[var(--muted)] hover:text-[var(--foreground)]"
+              }`}
+            >
+              {l}
+              <sup>e</sup>
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -220,41 +270,84 @@ export function CategorieVotesList({
   return (
     <div className="space-y-3">
       <p className="text-xs leading-relaxed text-[var(--muted)]">
-        <span className="font-medium text-[var(--foreground)]">Barre du haut</span> : approbation
-        (pour / contre / abstention), tous textes confondus.{" "}
-        <span className="font-medium text-[var(--foreground)]">Barre du bas</span> : orientation,
-        calculée uniquement sur les textes clairement marqués à gauche ou à droite — voter{" "}
-        <em>contre</em>{" "}un texte d&apos;un pôle compte comme un point vers le pôle opposé.
+        Pour chaque thème : <b className="text-[var(--foreground)]">Approbation</b> = répartition des
+        votes (pour / contre / abstention), tous textes confondus ;{" "}
+        <b className="text-[var(--foreground)]">Orientation</b> = tendance gauche-droite, mesurée
+        uniquement sur les textes clairement marqués à gauche ou à droite.
       </p>
-      {rows.map((r) => {
-        const exp = r.pour + r.contre + r.abstention || 1;
-        const pourPct = Math.round((r.pour / exp) * 100);
-        const contrePct = Math.round((r.contre / exp) * 100);
-        const tendance =
-          r.pour > r.contre ? "Plutôt pour" : r.contre > r.pour ? "Plutôt contre" : "Partagé";
-        return (
-          <div key={r.categorie}>
-            <div className="mb-1 flex items-center justify-between gap-2 text-xs">
-              <span className="flex items-center gap-1.5 font-medium">
+      <div className="divide-y divide-[var(--border)]">
+        {rows.map((r) => {
+          const exp = r.pour + r.contre + r.abstention || 1;
+          const pourPct = Math.round((r.pour / exp) * 100);
+          const contrePct = Math.round((r.contre / exp) * 100);
+          const abstPct = Math.max(0, 100 - pourPct - contrePct);
+          const tendance =
+            r.pour > r.contre ? "Plutôt pour" : r.contre > r.pour ? "Plutôt contre" : "Partagé";
+          const tendanceColor =
+            r.pour > r.contre
+              ? POSITION_COLOR.pour
+              : r.contre > r.pour
+                ? POSITION_COLOR.contre
+                : "#8A96A3";
+          return (
+            <div key={r.categorie} className="py-4 first:pt-0 last:pb-0">
+              <div className="mb-3 flex items-center gap-2">
                 <span
-                  className="h-2 w-2 rounded-full"
+                  className="h-2.5 w-2.5 shrink-0 rounded-full"
                   style={{ background: categorieColor(r.categorie) }}
                 />
-                {r.categorie}
-              </span>
-              <span className="text-[var(--muted)]">
-                {tendance} · {pourPct}% pour · {contrePct}% contre
-              </span>
+                <span className="text-sm font-semibold">{r.categorie}</span>
+              </div>
+              <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
+                <div>
+                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">
+                      Approbation
+                    </span>
+                    <span
+                      className="rounded-full px-2 py-0.5 text-xs font-semibold"
+                      style={{ color: tendanceColor, background: `${tendanceColor}1a` }}
+                    >
+                      {tendance}
+                    </span>
+                  </div>
+                  <VoteBar pour={r.pour} contre={r.contre} abstention={r.abstention} />
+                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-[var(--muted)]">
+                    <span className="inline-flex items-center gap-1">
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ background: POSITION_COLOR.pour }}
+                      />
+                      {pourPct}% pour
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ background: POSITION_COLOR.contre }}
+                      />
+                      {contrePct}% contre
+                    </span>
+                    {abstPct > 0 && (
+                      <span className="inline-flex items-center gap-1">
+                        <span
+                          className="h-2 w-2 rounded-full"
+                          style={{ background: POSITION_COLOR.abstention }}
+                        />
+                        {abstPct}% abst.
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <OrientationLean
+                  categorie={r.categorie}
+                  gaucheN={r.orient_gauche ?? 0}
+                  droiteN={r.orient_droite ?? 0}
+                />
+              </div>
             </div>
-            <VoteBar pour={r.pour} contre={r.contre} abstention={r.abstention} />
-            <OrientationLean
-              categorie={r.categorie}
-              gaucheN={r.orient_gauche ?? 0}
-              droiteN={r.orient_droite ?? 0}
-            />
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }

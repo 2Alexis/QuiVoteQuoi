@@ -21,6 +21,58 @@ const BLOCS = [
   { key: "autre", label: "Divers / NI", color: "#8A96A3" },
 ] as const;
 
+// Pictogrammes des indicateurs clés (traits, `currentColor`) — un par KPI pour
+// que le sens se saisisse d'un coup d'œil, presque sans lire l'intitulé.
+const iconProps = {
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.8,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+  "aria-hidden": true,
+};
+// Députés : une silhouette (un élu).
+function IconDeputes({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps} className={className}>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M5 20v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1" />
+    </svg>
+  );
+}
+// Scrutins : un document (chaque scrutin porte sur un texte).
+function IconScrutins({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps} className={className}>
+      <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+      <path d="M15 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+      <path d="M9 13h6" />
+      <path d="M9 17h4" />
+    </svg>
+  );
+}
+// Votes enregistrés : une coche (chaque vote individuel compté).
+function IconVotes({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps} className={className}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="m8.5 12.5 2.5 2.5 4.5-5" />
+    </svg>
+  );
+}
+// Groupes : plusieurs silhouettes (un rassemblement de députés).
+function IconGroupes({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps} className={className}>
+      <path d="M16 20v-1a5 5 0 0 0-5-5H7a5 5 0 0 0-5 5v1" />
+      <circle cx="9" cy="8" r="4" />
+      <path d="M22 20v-1a5 5 0 0 0-3.5-4.8" />
+      <path d="M15 4.2a4 4 0 0 1 0 7.6" />
+    </svg>
+  );
+}
+
 export default function Home() {
   const s = stats();
   const gs = compositionActuelle();
@@ -40,8 +92,8 @@ export default function Home() {
           </h1>
           <p className="text-lg text-[var(--muted)]">
             Difficile de savoir ce que votent vraiment les députés. QuiVoteQuoi rend chaque scrutin,
-            chaque vote et chaque prise de position clairs et comparables — à partir de l&apos;open
-            data officiel.
+            chaque vote et chaque prise de position clairs et comparables — à partir de données open
+            sources et officielles.
           </p>
           <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
             {[
@@ -74,14 +126,17 @@ export default function Home() {
       <section className="space-y-2">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { label: "Députés", value: s.deputes, href: "/deputes" },
-            { label: "Scrutins", value: s.scrutins, href: "/scrutins" },
-            { label: "Votes enregistrés", value: s.votes, href: "/scrutins" },
-            { label: "Groupes", value: s.groupes, href: "/groupes" },
-          ].map((c) => (
-            <Link key={c.label} href={c.href} className="card p-4 transition-shadow hover:shadow-sm">
-              <div className="stat-num text-2xl font-bold sm:text-3xl">{formatNumber(c.value)}</div>
-              <div className="text-sm text-[var(--muted)]">{c.label}</div>
+            { label: "Députés", value: s.deputes, href: "/deputes", Icon: IconDeputes },
+            { label: "Scrutins", value: s.scrutins, href: "/scrutins", Icon: IconScrutins },
+            { label: "Votes enregistrés", value: s.votes, href: "/scrutins", Icon: IconVotes },
+            { label: "Groupes", value: s.groupes, href: "/groupes", Icon: IconGroupes },
+          ].map(({ label, value, href, Icon }) => (
+            <Link key={label} href={href} className="card p-4 transition-shadow hover:shadow-sm">
+              <span className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--accent-soft)] text-[var(--accent-strong)]">
+                <Icon className="h-5 w-5" />
+              </span>
+              <div className="stat-num text-2xl font-bold sm:text-3xl">{formatNumber(value)}</div>
+              <div className="text-sm text-[var(--muted)]">{label}</div>
             </Link>
           ))}
         </div>

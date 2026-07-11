@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     template: "%s · QuiVoteQuoi",
   },
   description:
-    "Comparez et explorez les scrutins, les votes, les députés et les groupes de l'Assemblée nationale française. Données open data officielles.",
+    "Comparez et explorez les scrutins, les votes, les députés et les groupes de l'Assemblée nationale française. Données open sources et officielles.",
   applicationName: SITE_NAME,
   keywords: [
     "Assemblée nationale",
@@ -36,13 +36,13 @@ export const metadata: Metadata = {
     locale: "fr_FR",
     title: "QuiVoteQuoi — les votes de l'Assemblée nationale",
     description:
-      "Comparez et explorez les scrutins, les votes, les députés et les groupes de l'Assemblée nationale française. Données open data officielles.",
+      "Comparez et explorez les scrutins, les votes, les députés et les groupes de l'Assemblée nationale française. Données open sources et officielles.",
   },
   twitter: {
     card: "summary_large_image",
     title: "QuiVoteQuoi — les votes de l'Assemblée nationale",
     description:
-      "Explorez et comparez les votes de l'Assemblée nationale — données open data officielles.",
+      "Explorez et comparez les votes de l'Assemblée nationale — données open sources et officielles.",
   },
   robots: { index: true, follow: true },
 };

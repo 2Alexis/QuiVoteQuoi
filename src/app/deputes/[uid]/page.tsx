@@ -10,8 +10,8 @@ import {
   votesDeputeParCategorie,
   condamnations,
 } from "@/lib/db";
-import { LEGISLATURE_LABEL } from "@/lib/db";
-import { formatDate, sortBadge } from "@/lib/ui";
+import { LEGISLATURE_LABEL, DEFAULT_LEG } from "@/lib/db";
+import { formatDate, sortBadge, groupColor, deputePhotoUrl } from "@/lib/ui";
 import {
   GroupBadge,
   PositionPill,
@@ -19,8 +19,10 @@ import {
   CategoriePill,
   OrientationPill,
   Condamnations,
+  MetricRing,
 } from "@/components/bits";
 import { ScrutinCard } from "@/components/ScrutinCard";
+import { DeputePhoto } from "@/components/DeputePhoto";
 
 // Fiche d'un député : le rendu ne dépend que de l'uid (aucun searchParams) et les
 // données ne bougent qu'au rythme des ingestions (quotidiennes). On met donc la
@@ -53,28 +55,11 @@ export async function generateMetadata({
   return pageMeta({ title: `${nom}${grp}`, description: desc, path: `/deputes/${uid}` });
 }
 
-const pctFmt = (v: number) => `${Math.round(v * 100)}%`;
-
-function MetricBar({ label, value, hint }: { label: string; value: number; hint: string }) {
-  return (
-    <div className="card p-4">
-      <div className="stat-num text-2xl font-bold">{pctFmt(value)}</div>
-      <div className="text-xs font-medium">{label}</div>
-      <div className="mt-2 h-1.5 w-full overflow-hidden rounded bg-[var(--border)]">
-        <div
-          className="h-full rounded bg-[var(--accent)]"
-          style={{ width: `${Math.round(value * 100)}%` }}
-        />
-      </div>
-      <div className="mt-1 text-[11px] text-[var(--muted)]">{hint}</div>
-    </div>
-  );
-}
-
 export default async function DeputeDetail({ params }: { params: Promise<{ uid: string }> }) {
   const { uid } = await params;
   const d = depute(uid);
   if (!d) notFound();
+  const leg = d.mandats[0]?.legislature ?? DEFAULT_LEG;
   const stats = statsDepute(uid);
   const VOTES_APERCU = 20;
   const votes = votesDuDepute(uid, VOTES_APERCU);
@@ -88,21 +73,34 @@ export default async function DeputeDetail({ params }: { params: Promise<{ uid: 
         <Link href="/deputes" className="text-sm text-[var(--muted)] link-accent">
           ← Députés
         </Link>
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-bold">
-            {d.civ} {d.prenom} {d.nom}
-          </h1>
-          <GroupBadge
-            abrege={d.groupe_abrege}
-            libelle={d.groupe_libelle}
-            uid={d.groupe_uid}
-            size="md"
+        <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center">
+          <DeputePhoto
+            src={deputePhotoUrl(uid, leg)}
+            prenom={d.prenom}
+            nom={d.nom}
+            color={groupColor(d.groupe_abrege)}
+            size={96}
           />
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl font-bold">
+                {d.civ} {d.prenom} {d.nom}
+              </h1>
+              <GroupBadge
+                abrege={d.groupe_abrege}
+                libelle={d.groupe_libelle}
+                uid={d.groupe_uid}
+                size="md"
+              />
+            </div>
+            <p className="mt-1 text-sm text-[var(--muted)]">
+              {d.dept
+                ? `${d.dept} · ${d.num_circo}e circonscription`
+                : "Circonscription non renseignée"}
+              {d.profession ? ` · ${d.profession}` : ""}
+            </p>
+          </div>
         </div>
-        <p className="mt-1 text-sm text-[var(--muted)]">
-          {d.dept ? `${d.dept} · ${d.num_circo}e circonscription` : "Circonscription non renseignée"}
-          {d.profession ? ` · ${d.profession}` : ""}
-        </p>
       </div>
 
       <Condamnations items={condamne} />
@@ -115,23 +113,23 @@ export default async function DeputeDetail({ params }: { params: Promise<{ uid: 
             <h2 className="text-lg font-semibold">
               {LEGISLATURE_LABEL[s.legislature] ?? `Législature ${s.legislature}`}
             </h2>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <MetricBar
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <MetricRing
                 label="Participation"
                 value={s.participation}
                 hint={`${s.n_exprime} votes exprimés sur ${s.n_concerne} scrutins`}
               />
-              <MetricBar
+              <MetricRing
                 label="Loyauté au groupe"
                 value={s.loyaute}
                 hint={`Suit la position majoritaire de son groupe (${s.n_loyal}/${s.n_loyal_denom})`}
               />
-              <MetricBar
+              <MetricRing
                 label="Alignement présidentiel"
                 value={s.align}
                 hint={`Vote comme le bloc présidentiel (${s.n_align}/${s.n_align_denom})`}
               />
-              <MetricBar
+              <MetricRing
                 label="Alignement (votes clivants)"
                 value={s.alignClivant}
                 hint={`Hors votes quasi-unanimes (${s.n_align_cliv}/${s.n_align_cliv_denom})`}

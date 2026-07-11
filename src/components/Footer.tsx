@@ -74,7 +74,7 @@ export function Footer() {
             <BrandLogo />
             <p className="text-sm leading-relaxed text-[var(--muted)]">
               Explorez et comparez les scrutins, les votes, les députés et les groupes de
-              l’Assemblée nationale, à partir des données open data officielles.
+              l’Assemblée nationale, à partir de données open sources et officielles.
             </p>
           </div>
 

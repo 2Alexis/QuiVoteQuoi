@@ -54,7 +54,7 @@ export default async function GroupesPage({
           <Link
             key={g.uid}
             href={`/groupes/${g.uid}`}
-            className="card flex items-center gap-4 p-4 transition-shadow hover:shadow-sm"
+            className="card flex items-center gap-4 p-4 transition hover:scale-[1.02] hover:shadow-sm"
           >
             <GroupLogo abrege={g.abrege} libelle={g.libelle} size={52} />
             <div className="min-w-0 flex-1">
@@ -68,24 +68,25 @@ export default async function GroupesPage({
       </div>
 
       {positions.length > 0 && (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <section className="card p-5">
-            <h2 className="mb-1 text-lg font-semibold">Cartographie des groupes</h2>
-            <p className="mb-3 text-xs text-[var(--muted)]">
-              Positionnement 2D (MDS) : deux groupes sont proches lorsqu&apos;ils votent de la même
-              façon. La taille reflète le nombre de députés.
-            </p>
-            <MdsMap positions={positions} />
-          </section>
-          <section className="card p-5">
-            <h2 className="mb-1 text-lg font-semibold">Cohésion interne</h2>
-            <p className="mb-3 text-xs text-[var(--muted)]">
-              Part des députés du groupe suivant la position majoritaire, en moyenne sur tous les
-              scrutins.
-            </p>
-            <CohesionInterne positions={positions} />
-          </section>
-        </div>
+        <section className="card p-5">
+          <h2 className="mb-1 text-lg font-semibold">Cartographie des groupes</h2>
+          <p className="mb-3 text-xs text-[var(--muted)]">
+            Positionnement 2D (MDS) : deux groupes sont proches lorsqu&apos;ils votent de la même
+            façon. La taille reflète le nombre de députés.
+          </p>
+          <MdsMap positions={positions} />
+        </section>
+      )}
+
+      {positions.length > 0 && (
+        <section className="card p-5">
+          <h2 className="mb-1 text-lg font-semibold">Cohésion interne</h2>
+          <p className="mb-3 text-xs text-[var(--muted)]">
+            Part des députés du groupe suivant la position majoritaire, en moyenne sur tous les
+            scrutins.
+          </p>
+          <CohesionInterne positions={positions} />
+        </section>
       )}
 
       {positions.length > 0 && (

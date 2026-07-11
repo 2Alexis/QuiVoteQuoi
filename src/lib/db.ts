@@ -958,6 +958,45 @@ export function positionsGroupes(leg = DEFAULT_LEG): GroupePosition[] {
   return rows;
 }
 
+export interface GroupeStats {
+  n_membres: number;
+  cohesion: number;
+  participation: number;
+  align: number;
+  alignClivant: number;
+}
+
+// Indicateurs agrégés d'un groupe pour une législature : cohésion (table
+// groupe_stats) + participation / alignement mis en commun sur les stats de ses
+// membres — on somme numérateurs et dénominateurs plutôt que de moyenner des
+// ratios, pour un chiffre exact.
+export function statsGroupe(uid: string, leg = DEFAULT_LEG): GroupeStats {
+  const d = db();
+  const agg = d
+    .prepare(
+      `SELECT COUNT(DISTINCT m.uid) n_membres,
+              SUM(ds.n_exprime) n_exprime, SUM(ds.n_concerne) n_concerne,
+              SUM(ds.n_align) n_align, SUM(ds.n_align_denom) n_align_denom,
+              SUM(ds.n_align_cliv) n_align_cliv, SUM(ds.n_align_cliv_denom) n_align_cliv_denom
+       FROM mandats m
+       LEFT JOIN depute_stats ds ON ds.uid = m.uid AND ds.legislature = m.legislature
+       WHERE m.groupe_uid = ? AND m.legislature = ?`
+    )
+    .get(uid, leg) as Record<string, number | null> | undefined;
+  const coh = d
+    .prepare("SELECT cohesion FROM groupe_stats WHERE groupe_uid = ? AND legislature = ?")
+    .get(uid, leg) as { cohesion: number } | undefined;
+  const ratio = (a: number | null | undefined, b: number | null | undefined) =>
+    b ? (a ?? 0) / b : 0;
+  return {
+    n_membres: (agg?.n_membres as number) ?? 0,
+    cohesion: coh?.cohesion ?? 0,
+    participation: ratio(agg?.n_exprime, agg?.n_concerne),
+    align: ratio(agg?.n_align, agg?.n_align_denom),
+    alignClivant: ratio(agg?.n_align_cliv, agg?.n_align_cliv_denom),
+  };
+}
+
 export interface OrientCat {
   categorie: string;
   gauche: number;

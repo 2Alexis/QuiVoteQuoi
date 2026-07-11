@@ -25,8 +25,8 @@ const pct = (v: number) => `${Math.round(v * 100)}%`;
 
 export function MdsMap({ positions }: { positions: GroupePos[] }) {
   const W = 480;
-  const H = 360;
-  const pad = 40;
+  const H = 280;
+  const pad = 36;
   if (positions.length === 0) return <p className="text-sm text-[var(--muted)]">Aucune donnée.</p>;
   const xs = positions.map((p) => p.x);
   const ys = positions.map((p) => p.y);
@@ -37,8 +37,9 @@ export function MdsMap({ positions }: { positions: GroupePos[] }) {
   const sy = (y: number) => pad + ((maxY - y) / (maxY - minY || 1)) * (H - 2 * pad);
   const maxN = Math.max(...positions.map((p) => p.n));
   return (
-    <div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
+    <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
+      <div className="min-w-0 lg:w-[640px] lg:shrink-0">
+        <svg viewBox={`0 0 ${W} ${H}`} className="block w-full">
         <defs>
           <marker id="mds-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
             <path d="M0,0 L6,3 L0,6 Z" fill="var(--muted)" />
@@ -76,27 +77,27 @@ export function MdsMap({ positions }: { positions: GroupePos[] }) {
             </g>
           );
         })}
-      </svg>
-      <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
-        <strong className="text-[var(--foreground)]">Axe horizontal :</strong> gauche ↔ droite, selon la
-        proximité des votes. <strong className="text-[var(--foreground)]">Axe vertical :</strong> les groupes
-        du haut votent le plus souvent <em>avec la majorité présidentielle</em>, ceux du bas s&apos;y opposent
-        le plus. Deux groupes proches sur la carte votent de façon semblable&nbsp;; la taille du cercle reflète
-        le nombre de députés.
-      </p>
-      <div className="mt-3 border-t border-[var(--border)] pt-3">
+        </svg>
+      </div>
+      <div className="min-w-0 flex-1">
         <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">
           Légende
         </div>
-        <div className="grid grid-cols-1 gap-x-4 gap-y-1.5 sm:grid-cols-2">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-3 lg:grid-cols-1">
           {positions.map((g) => (
-            <div key={g.uid} className="flex items-center gap-2 text-xs">
+            <div
+              key={g.uid}
+              className="flex min-w-0 items-center gap-2 text-xs"
+              title={g.libelle ?? undefined}
+            >
               <span
                 className="h-3 w-3 shrink-0 rounded-full"
                 style={{ background: groupColor(g.abrege) }}
               />
               <span className="font-semibold">{g.abrege}</span>
-              <span className="truncate text-[var(--muted)]">{g.libelle}</span>
+              <span className="hidden min-w-0 flex-1 truncate text-[var(--muted)] lg:block">
+                {g.libelle}
+              </span>
               <span className="ml-auto shrink-0 stat-num text-[var(--muted)]">{g.n}</span>
             </div>
           ))}
@@ -107,11 +108,15 @@ export function MdsMap({ positions }: { positions: GroupePos[] }) {
 }
 
 export function CohesionInterne({ positions }: { positions: GroupePos[] }) {
+  if (positions.length === 0)
+    return <p className="text-sm text-[var(--muted)]">Aucune donnée.</p>;
+  const sorted = [...positions].sort((x, y) => y.cohesion - x.cohesion);
+  const top = sorted[0];
+  const low = sorted[sorted.length - 1];
   return (
-    <div className="space-y-2">
-      {[...positions]
-        .sort((x, y) => y.cohesion - x.cohesion)
-        .map((g) => (
+    <div className="space-y-3">
+      <div className="grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
+        {sorted.map((g) => (
           <div key={g.uid} className="flex items-center gap-3">
             <span
               className="w-14 shrink-0 rounded px-1.5 py-0.5 text-center text-xs font-bold text-white"
@@ -119,7 +124,7 @@ export function CohesionInterne({ positions }: { positions: GroupePos[] }) {
             >
               {g.abrege}
             </span>
-            <div className="h-2 flex-1 overflow-hidden rounded bg-[var(--border)]">
+            <div className="h-2.5 flex-1 overflow-hidden rounded bg-[var(--border)]">
               <div
                 className="h-full rounded"
                 style={{
@@ -133,6 +138,12 @@ export function CohesionInterne({ positions }: { positions: GroupePos[] }) {
             </span>
           </div>
         ))}
+      </div>
+      <p className="text-xs leading-relaxed text-[var(--muted)]">
+        Groupe le plus discipliné : <b className="text-[var(--foreground)]">{top.abrege}</b> (
+        {pct(top.cohesion)} de votes alignés sur sa position majoritaire). Le plus dispersé :{" "}
+        <b className="text-[var(--foreground)]">{low.abrege}</b> ({pct(low.cohesion)}).
+      </p>
     </div>
   );
 }

@@ -40,7 +40,7 @@ function DeputeCarte({ d, leg, ancien }: { d: Depute; leg: string; ancien?: bool
   return (
     <Link
       href={`/deputes/${d.uid}`}
-      className={`card flex flex-col items-center gap-2 p-4 text-center transition-shadow hover:shadow-sm ${
+      className={`card flex flex-col items-center gap-2 p-4 text-center transition hover:scale-[1.02] hover:shadow-sm ${
         ancien ? "opacity-90" : ""
       }`}
       style={{ borderTop: `3px solid ${groupColor(d.groupe_abrege)}` }}
@@ -71,7 +71,14 @@ function DeputeCarte({ d, leg, ancien }: { d: Depute; leg: string; ancien?: bool
 export default async function DeputesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; g?: string; leg?: string; dept?: string; show?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    g?: string;
+    leg?: string;
+    dept?: string;
+    per?: string;
+    page?: string;
+  }>;
 }) {
   const sp = await searchParams;
   const search = sp.q?.trim() || undefined;
@@ -87,18 +94,28 @@ export default async function DeputesPage({
   const titulaires = uidsTitulaires(leg);
   const actifs = list.filter((d) => titulaires.has(d.uid));
   const anciens = list.filter((d) => !titulaires.has(d.uid));
+  const ANCIENS_APERCU = 12;
+  const anciensApercu = anciens.slice(0, ANCIENS_APERCU);
+  const anciensReste = anciens.slice(ANCIENS_APERCU);
   const isCurrent = leg === DEFAULT_LEG;
 
-  const PAGE = 60;
-  const show = Math.max(PAGE, parseInt(sp.show ?? "", 10) || PAGE);
-  const shown = actifs.slice(0, show);
-  const moreHref = () => {
+  // Pagination des mandats en cours : 30 par page par défaut, au choix 30/60/90.
+  const PER_OPTIONS = [30, 60, 90];
+  const perParsed = parseInt(sp.per ?? "", 10);
+  const per = PER_OPTIONS.includes(perParsed) ? perParsed : 30;
+  const totalPages = Math.max(1, Math.ceil(actifs.length / per));
+  const page = Math.min(Math.max(1, parseInt(sp.page ?? "", 10) || 1), totalPages);
+  const shown = actifs.slice((page - 1) * per, (page - 1) * per + per);
+  const pageHref = (over: { per?: number; page?: number }) => {
     const u = new URLSearchParams();
     if (search) u.set("q", search);
     if (g) u.set("g", g);
     u.set("leg", leg);
     if (dept) u.set("dept", dept);
-    u.set("show", String(show + PAGE));
+    const p = over.per ?? per;
+    const pg = over.page ?? page;
+    if (p !== 30) u.set("per", String(p));
+    if (pg > 1) u.set("page", String(pg));
     return `/deputes?${u.toString()}`;
   };
 
@@ -190,17 +207,50 @@ export default async function DeputesPage({
         )}
       </div>
 
-      {actifs.length > shown.length && (
-        <div className="flex flex-col items-center gap-2 pt-1">
-          <Link
-            href={moreHref()}
-            className="rounded-lg border border-[var(--border)] px-5 py-2 text-sm font-semibold hover:border-[var(--accent)] hover:text-[var(--accent)]"
-          >
-            Voir plus
-          </Link>
-          <span className="text-xs text-[var(--muted)]">
-            {shown.length} sur {actifs.length} députés
-          </span>
+      {actifs.length > 0 && (
+        <div className="flex flex-col items-center gap-3 pt-1 sm:flex-row sm:justify-between">
+          <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
+            <span>Par page&nbsp;:</span>
+            {PER_OPTIONS.map((n) => (
+              <Link
+                key={n}
+                href={pageHref({ per: n, page: 1 })}
+                aria-current={n === per ? "true" : undefined}
+                className={`rounded-full border px-2.5 py-1 font-semibold transition-colors ${
+                  n === per
+                    ? "border-[var(--accent)] bg-[var(--accent)] text-white"
+                    : "border-[var(--border)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                }`}
+              >
+                {n}
+              </Link>
+            ))}
+          </div>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-3 text-sm">
+              <Link
+                href={pageHref({ page: page - 1 })}
+                aria-disabled={page <= 1}
+                className={`rounded-lg border border-[var(--border)] px-3 py-1.5 ${
+                  page <= 1 ? "pointer-events-none opacity-40" : "hover:bg-[var(--surface)]"
+                }`}
+              >
+                ← Précédent
+              </Link>
+              <span className="whitespace-nowrap text-[var(--muted)]">
+                Page {page} / {totalPages}
+              </span>
+              <Link
+                href={pageHref({ page: page + 1 })}
+                aria-disabled={page >= totalPages}
+                className={`rounded-lg border border-[var(--border)] px-3 py-1.5 ${
+                  page >= totalPages ? "pointer-events-none opacity-40" : "hover:bg-[var(--surface)]"
+                }`}
+              >
+                Suivant →
+              </Link>
+            </div>
+          )}
         </div>
       )}
 
@@ -219,10 +269,25 @@ export default async function DeputesPage({
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {anciens.map((d) => (
+            {anciensApercu.map((d) => (
               <DeputeCarte key={d.uid} d={d} leg={leg} ancien />
             ))}
           </div>
+          {anciensReste.length > 0 && (
+            <details className="group">
+              <summary className="cursor-pointer list-none rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-center text-sm font-medium text-[var(--muted)] hover:text-[var(--foreground)]">
+                <span className="group-open:hidden">
+                  Voir les {anciensReste.length} autres anciens députés ▾
+                </span>
+                <span className="hidden group-open:inline">Réduire ▴</span>
+              </summary>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {anciensReste.map((d) => (
+                  <DeputeCarte key={d.uid} d={d} leg={leg} ancien />
+                ))}
+              </div>
+            </details>
+          )}
         </section>
       )}
 
