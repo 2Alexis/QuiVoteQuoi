@@ -10,6 +10,15 @@ import {
   LEGISLATURE_LABEL,
 } from "@/lib/db";
 import ComparateurClient, { type LegData, type CondamInfo } from "./ComparateurClient";
+import type { Metadata } from "next";
+import { pageMeta } from "@/lib/site";
+
+export const metadata: Metadata = pageMeta({
+  title: "Comparateur de votes",
+  description:
+    "Comparez les votes de deux députés ou de deux groupes de l'Assemblée nationale, thème par thème.",
+  path: "/comparateur",
+});
 
 // Page identique pour tous les visiteurs : elle ne lit ni searchParams, ni
 // cookies, ni en-têtes, et ses données ne changent qu'au rebuild nocturne de la

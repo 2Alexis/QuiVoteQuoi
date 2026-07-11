@@ -1,5 +1,7 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { pageMeta } from "@/lib/site";
 import {
   groupe,
   deputesDuGroupe,
@@ -22,6 +24,19 @@ import {
 import { GroupLogo } from "@/components/GroupLogo";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ uid: string }>;
+}): Promise<Metadata> {
+  const { uid } = await params;
+  const g = groupe(uid);
+  if (!g) return { title: "Groupe introuvable", robots: { index: false } };
+  const titre = g.abrege ? `${g.libelle} (${g.abrege})` : g.libelle;
+  const desc = `${g.libelle} à l'Assemblée nationale : cohésion des votes, orientation gauche-droite, députés membres et positions par thème.`;
+  return pageMeta({ title: titre, description: desc, path: `/groupes/${uid}` });
+}
 
 const POSITIONS = [
   ["", "Tous"],

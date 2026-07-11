@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { stats, compositionActuelle, scrutins } from "@/lib/db";
 import { formatNumber, formatDate, sortBadge, groupBloc } from "@/lib/ui";
 import { GroupBadge, VoteBar, Hemicycle } from "@/components/bits";
 
 export const dynamic = "force-static";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+  openGraph: { url: "/" },
+};
 
 const BLOCS = [
   { key: "ext-gauche", label: "Extrême gauche", color: "#7A0C1E" },
@@ -43,7 +49,10 @@ export default function Home() {
               "Comparez députés et groupes",
             ].map((f) => (
               <li key={f} className="flex items-center gap-1.5">
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[10px] font-bold text-[var(--accent-strong)]">
+                <span
+                  aria-hidden
+                  className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[10px] font-bold text-[var(--accent-strong)]"
+                >
                   ✓
                 </span>
                 {f}
@@ -91,15 +100,15 @@ export default function Home() {
           <div className="space-y-4">
             <Hemicycle groupes={gs} />
             {blocs.length > 0 && (
-              <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5">
+              <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1.5">
                 {blocs.map((b) => (
-                  <span key={b.key} className="inline-flex items-center gap-1.5 text-xs">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: b.color }} />
+                  <li key={b.key} className="inline-flex items-center gap-1.5 text-xs">
+                    <span aria-hidden className="h-2.5 w-2.5 rounded-full" style={{ background: b.color }} />
                     <span className="font-medium">{b.label}</span>
                     <span className="text-[var(--muted)]">{b.n}</span>
-                  </span>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
           </div>
           <div className="space-y-1.5">
@@ -107,17 +116,20 @@ export default function Home() {
               <span className="text-sm font-medium">Groupes parlementaires</span>
               <span className="text-xs text-[var(--muted)]">{totalSieges} sièges</span>
             </div>
-            {gs.map((g) => (
-              <Link
-                key={g.uid}
-                href={`/groupes/${g.uid}`}
-                className="flex items-center gap-3 rounded-lg p-1.5 hover:bg-[var(--background)]"
-              >
-                <GroupBadge abrege={g.abrege} libelle={g.libelle} />
-                <span className="flex-1 truncate text-sm">{g.libelle}</span>
-                <span className="stat-num text-sm font-semibold">{g.n}</span>
-              </Link>
-            ))}
+            <ul className="space-y-1.5">
+              {gs.map((g) => (
+                <li key={g.uid}>
+                  <Link
+                    href={`/groupes/${g.uid}`}
+                    className="flex items-center gap-3 rounded-lg p-1.5 hover:bg-[var(--background)]"
+                  >
+                    <GroupBadge abrege={g.abrege} libelle={g.libelle} />
+                    <span className="flex-1 truncate text-sm">{g.libelle}</span>
+                    <span className="stat-num text-sm font-semibold">{g.n}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
@@ -129,36 +141,37 @@ export default function Home() {
             Tout voir →
           </Link>
         </div>
-        <div className="card divide-y divide-[var(--border)]">
+        <ul className="card divide-y divide-[var(--border)]">
           {derniers.map((sc) => {
             const b = sortBadge(sc.sort_code);
             return (
-              <Link
-                key={sc.uid}
-                href={`/scrutins/${sc.uid}`}
-                className="block p-4 hover:bg-[var(--background)] transition-colors"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs text-[var(--muted)]">
-                    {formatDate(sc.date)} · n°{sc.numero}
-                  </span>
-                  <span className={`badge ${b.cls}`}>{b.label}</span>
-                </div>
-                <div className="mt-1 line-clamp-2 text-sm font-medium">{sc.titre}</div>
-                <div className="mt-2 flex items-center gap-3">
-                  <VoteBar
-                    pour={sc.pour ?? 0}
-                    contre={sc.contre ?? 0}
-                    abstention={sc.abstentions ?? 0}
-                  />
-                  <span className="whitespace-nowrap text-xs text-[var(--muted)]">
-                    {sc.pour} pour · {sc.contre} contre
-                  </span>
-                </div>
-              </Link>
+              <li key={sc.uid}>
+                <Link
+                  href={`/scrutins/${sc.uid}`}
+                  className="block p-4 hover:bg-[var(--background)] transition-colors"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs text-[var(--muted)]">
+                      {formatDate(sc.date)} · n°{sc.numero}
+                    </span>
+                    <span className={`badge ${b.cls}`}>{b.label}</span>
+                  </div>
+                  <div className="mt-1 line-clamp-2 text-sm font-medium">{sc.titre}</div>
+                  <div className="mt-2 flex items-center gap-3">
+                    <VoteBar
+                      pour={sc.pour ?? 0}
+                      contre={sc.contre ?? 0}
+                      abstention={sc.abstentions ?? 0}
+                    />
+                    <span className="whitespace-nowrap text-xs text-[var(--muted)]">
+                      {sc.pour} pour · {sc.contre} contre
+                    </span>
+                  </div>
+                </Link>
+              </li>
             );
           })}
-        </div>
+        </ul>
       </section>
     </div>
   );

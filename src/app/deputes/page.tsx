@@ -5,8 +5,17 @@ import { FranceMap, type DeptAgg } from "@/components/FranceMap";
 import { DeputePhoto } from "@/components/DeputePhoto";
 import { deputePhotoUrl, groupColor, groupOrder } from "@/lib/ui";
 import departementsData from "@/data/departements.json";
+import type { Metadata } from "next";
+import { pageMeta } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = pageMeta({
+  title: "Députés",
+  description:
+    "La liste des députés de l'Assemblée nationale : groupe politique, circonscription, participation et votes de chacun.",
+  path: "/deputes",
+});
 
 const METRO_CODES = new Set(departementsData.departements.map((d) => d.code));
 

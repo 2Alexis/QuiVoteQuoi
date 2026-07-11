@@ -154,7 +154,14 @@ export function VoteBar({
   const seg = (n: number, c: string) =>
     n > 0 ? <span style={{ width: `${(n / total) * 100}%`, background: c }} /> : null;
   return (
-    <div className="votebar" title={`Pour ${pour} · Contre ${contre} · Abstention ${abstention}`}>
+    <div
+      className="votebar"
+      role="img"
+      aria-label={`Résultat du vote : ${pour} pour, ${contre} contre, ${abstention} abstention${
+        nonvotant > 0 ? `, ${nonvotant} non-votant` : ""
+      }`}
+      title={`Pour ${pour} · Contre ${contre} · Abstention ${abstention}`}
+    >
       {seg(pour, POSITION_COLOR.pour)}
       {seg(contre, POSITION_COLOR.contre)}
       {seg(abstention, POSITION_COLOR.abstention)}

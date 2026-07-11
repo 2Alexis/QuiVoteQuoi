@@ -1,5 +1,7 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { pageMeta } from "@/lib/site";
 import {
   depute,
   statsDepute,
@@ -19,7 +21,36 @@ import {
   Condamnations,
 } from "@/components/bits";
 
-export const dynamic = "force-dynamic";
+// Fiche d'un député : le rendu ne dépend que de l'uid (aucun searchParams) et les
+// données ne bougent qu'au rythme des ingestions (quotidiennes). On met donc la
+// page en cache (ISR) et on la revalide en arrière-plan toutes les heures, plutôt
+// que de refaire le rendu React + les lectures SQLite à chaque visite.
+export const revalidate = 3600;
+
+// On ne prégénère aucune page au build (éviter un build long et une lecture
+// SQLite de tous les uid) : en renvoyant une liste vide, Next active le cache
+// incrémental (ISR) « à la demande » — la fiche est rendue à la 1re visite puis
+// servie depuis le cache, revalidée en arrière-plan selon `revalidate`.
+export function generateStaticParams(): { uid: string }[] {
+  return [];
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ uid: string }>;
+}): Promise<Metadata> {
+  const { uid } = await params;
+  const d = depute(uid);
+  if (!d) return { title: "Député introuvable", robots: { index: false } };
+  const nom = `${d.prenom ?? ""} ${d.nom ?? ""}`.trim();
+  const fonction = d.civ === "Mme" ? "Députée" : "Député";
+  const grp = d.groupe_abrege ? ` (${d.groupe_abrege})` : "";
+  const desc = `${fonction}${
+    d.groupe_libelle ? ` du groupe ${d.groupe_libelle}` : " à l'Assemblée nationale"
+  }. Votes, participation, loyauté, orientation et comparaisons de ${nom}.`;
+  return pageMeta({ title: `${nom}${grp}`, description: desc, path: `/deputes/${uid}` });
+}
 
 const pctFmt = (v: number) => `${Math.round(v * 100)}%`;
 

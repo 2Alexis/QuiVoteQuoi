@@ -10,8 +10,17 @@ import {
 import { LegSwitcher, ProfessionsGroupes } from "@/components/bits";
 import { GroupLogo } from "@/components/GroupLogo";
 import { MdsMap, CohesionInterne, TetesAffiche } from "@/components/GroupeViz";
+import type { Metadata } from "next";
+import { pageMeta } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = pageMeta({
+  title: "Groupes parlementaires",
+  description:
+    "Les groupes parlementaires de l'Assemblée nationale : composition, cohésion interne des votes et orientation politique.",
+  path: "/groupes",
+});
 
 export default async function GroupesPage({
   searchParams,
