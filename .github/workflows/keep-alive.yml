@@ -1,0 +1,32 @@
+# Keep-alive : ping l'endpoint /health toutes les ~10 min pour empêcher la mise
+# en veille de l'instance Render (plan gratuit : endormie après 15 min d'inactivité).
+# FILET DE SECOURS derrière UptimeRobot : GitHub throttle les schedules (délais
+# parfois > 15 min aux heures de pointe), donc à ne pas utiliser comme UNIQUE pinger.
+# GitHub Actions est gratuit (illimité sur un dépôt public).
+name: Keep-alive Render
+
+on:
+  schedule:
+    - cron: "*/10 * * * *" # toutes les 10 min (throttling GitHub possible)
+  workflow_dispatch: {} # + bouton « Run workflow » manuel
+
+# Aucun accès au dépôt nécessaire : on tape juste une URL publique.
+permissions: {}
+
+# Évite que deux pings se chevauchent si un run traîne (cold start).
+concurrency:
+  group: keep-alive
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping /health
+        # --max-time 90 : laisse le temps au cold start Render (~30-50 s).
+        # --retry 2 + --retry-all-errors : réessaie si le réveil échoue au 1er coup.
+        run: |
+          curl -fsS --max-time 90 --retry 2 --retry-delay 30 --retry-all-errors \
+            "https://quivotequoi.onrender.com/health" \
+            && echo "Ping OK — instance réveillée." \
+            || { echo "Ping échoué (cold start > timeout ou service indisponible)."; exit 1; }
