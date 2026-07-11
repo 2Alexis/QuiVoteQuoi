@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLogo } from "@/components/BrandMark";
 
 // Colonnes de liens du pied de page. Les liens internes utilisent <Link>,
 // les liens externes un <a> classique (nouvel onglet + rel de sécurité).
@@ -65,57 +66,53 @@ export function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="mt-10 border-t border-[var(--border)] bg-[var(--surface)]">
-      <div className="mx-auto max-w-6xl px-5 py-10">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="space-y-3">
-            <Link href="/" className="flex items-center gap-2 font-bold tracking-tight">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--accent)] text-sm font-bold text-white">
-                ✓
-              </span>
-              <span className="text-lg">
-                Qui<span className="text-[var(--accent)]">Vote</span>Quoi
-              </span>
-            </Link>
+    <footer className="mt-12 border-t border-[var(--border)] bg-[var(--surface)]">
+      <div className="mx-auto max-w-6xl px-5 py-12">
+        <div className="flex flex-col gap-10 lg:flex-row lg:justify-between lg:gap-16">
+          {/* Bloc marque */}
+          <div className="max-w-sm space-y-3">
+            <BrandLogo />
             <p className="text-sm leading-relaxed text-[var(--muted)]">
               Explorez et comparez les scrutins, les votes, les députés et les groupes de
               l’Assemblée nationale, à partir des données open data officielles.
             </p>
           </div>
 
-          <nav aria-label="Navigation du site">
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--foreground)]">
-              Navigation
-            </h2>
-            <InternalLinks links={NAVIGATION} />
-          </nav>
+          {/* Colonnes de liens : regroupées dans leur propre grille pour rester
+              alignées entre elles, quelle que soit la hauteur du bloc marque. */}
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 sm:gap-12">
+            <nav aria-label="Navigation du site">
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--foreground)]">
+                Navigation
+              </h2>
+              <InternalLinks links={NAVIGATION} />
+            </nav>
 
-          <nav aria-label="Informations légales">
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--foreground)]">
-              Informations
-            </h2>
-            <InternalLinks links={INFORMATIONS} />
-          </nav>
+            <nav aria-label="Informations légales">
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--foreground)]">
+                Informations
+              </h2>
+              <InternalLinks links={INFORMATIONS} />
+            </nav>
 
-          <nav aria-label="Ressources externes">
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--foreground)]">
-              Ressources
-            </h2>
-            <ExternalLinks links={RESSOURCES} />
-          </nav>
+            <nav aria-label="Ressources externes">
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--foreground)]">
+                Ressources
+              </h2>
+              <ExternalLinks links={RESSOURCES} />
+            </nav>
+          </div>
         </div>
 
-        <div className="mt-8 flex flex-col gap-2 border-t border-[var(--border)] pt-6 text-xs text-[var(--muted)] sm:flex-row sm:items-center sm:justify-between">
-          <p>
-            © {year} QuiVoteQuoi · Projet indépendant, non affilié à l’Assemblée nationale.
-          </p>
+        <div className="mt-10 flex flex-col gap-2 border-t border-[var(--border)] pt-6 text-xs text-[var(--muted)] sm:flex-row sm:items-center sm:justify-between">
+          <p>© {year} QuiVoteQuoi · Projet indépendant, non affilié à l’Assemblée nationale.</p>
           <p>
             Données :{" "}
             <a
               href="https://data.assemblee-nationale.fr/"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-[var(--accent)]"
+              className="font-medium transition-colors hover:text-[var(--accent)]"
             >
               Assemblée nationale
             </a>{" "}

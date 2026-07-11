@@ -6,13 +6,13 @@
   --foreground: #161a20;
   --muted: #5b6572;
   --border: #e5e8ed;
-  /* Palette neutre (sarcelle) — volontairement à l'écart du bleu/rouge
+  /* Palette neutre (indigo/violet) — volontairement à l'écart du bleu/rouge
      politiques, pour ne suggérer aucune orientation. Les couleurs de parti
      ne servent qu'à représenter des données (cartes, graphiques, badges). */
-  --accent: #0f766e;
-  --accent-2: #0d9488;
-  --accent-strong: #0b5951;
-  --accent-soft: rgba(15, 118, 110, 0.14);
+  --accent: #4f46e5;
+  --accent-2: #6366f1;
+  --accent-strong: #4338ca;
+  --accent-soft: rgba(79, 70, 229, 0.14);
 }
 
 @theme inline {
@@ -95,7 +95,7 @@ a {
 }
 .btn-primary:hover {
   background: var(--accent-strong);
-  box-shadow: 0 1px 3px rgba(11, 89, 81, 0.25);
+  box-shadow: 0 1px 3px rgba(67, 56, 202, 0.25);
 }
 .btn-secondary {
   display: inline-flex;
