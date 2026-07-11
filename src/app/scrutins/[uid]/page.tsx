@@ -3,8 +3,43 @@ import { notFound } from "next/navigation";
 import { scrutin, ventilationScrutin, votesNominatifsScrutin } from "@/lib/db";
 import { formatDate, sortBadge, POSITION_COLOR, scrutinUrlOfficiel } from "@/lib/ui";
 import { GroupBadge, VoteBar, CategoriePill, OrientationPill, HemicycleVote } from "@/components/bits";
+import { ScrutinCard } from "@/components/ScrutinCard";
+import { parseScrutin } from "@/lib/parseScrutin";
+import { pageMeta } from "@/lib/site";
+import type { Metadata } from "next";
 
-export const dynamic = "force-dynamic";
+// Détail d'un scrutin : le rendu ne dépend que de l'uid (aucun searchParams) et
+// les données ne bougent qu'au rythme des ingestions (quotidiennes). On met donc
+// la page en cache (ISR) et on la revalide en arrière-plan toutes les heures,
+// plutôt que de refaire le rendu React + les lectures SQLite à chaque visite.
+export const revalidate = 3600;
+
+// On ne prégénère aucune page au build (éviter un build long et une lecture
+// SQLite de tous les uid) : en renvoyant une liste vide, Next active le cache
+// incrémental (ISR) « à la demande » — la fiche est rendue à la 1re visite puis
+// servie depuis le cache, revalidée en arrière-plan selon `revalidate`.
+export function generateStaticParams(): { uid: string }[] {
+  return [];
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ uid: string }>;
+}): Promise<Metadata> {
+  const { uid } = await params;
+  const sc = scrutin(uid);
+  if (!sc) return { title: "Scrutin introuvable", robots: { index: false } };
+  const p = parseScrutin(sc.titre);
+  const label = p.loi ? `${p.type} · ${p.loi}` : p.action ?? sc.titre ?? `Scrutin n°${sc.numero}`;
+  const titre = `Scrutin n°${sc.numero} — ${label}`.slice(0, 110);
+  const desc = `${formatDate(sc.date)} · ${sortBadge(sc.sort_code).label}. ${sc.pour ?? 0} pour, ${
+    sc.contre ?? 0
+  } contre, ${sc.abstentions ?? 0} abstention. ${sc.titre ?? ""}`
+    .trim()
+    .slice(0, 300);
+  return pageMeta({ title: titre, description: desc, path: `/scrutins/${uid}` });
+}
 
 export default async function ScrutinDetail({ params }: { params: Promise<{ uid: string }> }) {
   const { uid } = await params;
@@ -41,7 +76,7 @@ export default async function ScrutinDetail({ params }: { params: Promise<{ uid:
             score={sc.orientation_score}
           />
         </div>
-        <h1 className="mt-2 text-2xl font-bold leading-snug">{sc.titre}</h1>
+        <ScrutinCard titre={sc.titre} as="h1" size="lg" className="mt-2" />
         {sc.demandeur && (
           <p className="mt-1 text-sm text-[var(--muted)]">Demandé par {sc.demandeur}</p>
         )}

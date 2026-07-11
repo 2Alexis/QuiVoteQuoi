@@ -2,8 +2,18 @@ import Link from "next/link";
 import { scrutins, legislatures, categoriesScrutins, DEFAULT_LEG } from "@/lib/db";
 import { formatDate, sortBadge, categorieColor } from "@/lib/ui";
 import { VoteBar, LegSwitcher, CategoriePill, OrientationPill } from "@/components/bits";
+import { ScrutinCard } from "@/components/ScrutinCard";
+import type { Metadata } from "next";
+import { pageMeta } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = pageMeta({
+  title: "Scrutins",
+  description:
+    "Tous les scrutins publics de l'Assemblée nationale : résultat, votes par groupe et orientation gauche-droite.",
+  path: "/scrutins",
+});
 
 export default async function ScrutinsPage({
   searchParams,
@@ -201,7 +211,7 @@ export default async function ScrutinsPage({
                 <span className={`badge ${b.cls}`}>{b.label}</span>
               </div>
               <div className="mt-1 flex items-start justify-between gap-3">
-                <div className="text-sm font-medium">{sc.titre}</div>
+                <ScrutinCard titre={sc.titre} className="min-w-0 flex-1" />
                 <div className="flex shrink-0 flex-wrap justify-end gap-1">
                   <CategoriePill categorie={sc.categorie} />
                   <OrientationPill
