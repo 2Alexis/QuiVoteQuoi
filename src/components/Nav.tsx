@@ -20,12 +20,15 @@ function isActive(pathname: string, href: string): boolean {
 export function Nav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [lastPath, setLastPath] = useState(pathname);
   const comparateurActif = isActive(pathname, "/comparateur");
 
-  // Referme le menu à chaque navigation et à la touche Échap.
-  useEffect(() => {
+  // Referme le menu à chaque navigation (ajustement pendant le rendu,
+  // recommandé plutôt qu'un effet) et à la touche Échap.
+  if (pathname !== lastPath) {
+    setLastPath(pathname);
     setOpen(false);
-  }, [pathname]);
+  }
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
