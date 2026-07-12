@@ -64,6 +64,12 @@ const POLE_G = "#2A9D8F"; // teal (pôle « gauche » du thème)
 const POLE_D = "#E0A13C"; // ambre (pôle « droite » du thème)
 const POLE_MID = "#E8ECF1"; // gris clair neutre au centre de l'axe
 
+// Couleurs d'identité pour comparer deux députés (un par « côté »). Volontairement
+// neutres — ni rouge/bleu politique, ni « bien / mal » — et distinctes du teal/ambre
+// des pôles d'orientation, pour rester lisibles quand les deux repères cohabitent.
+const IDENT_A = "#7048E8"; // violet
+const IDENT_B = "#F76707"; // orange
+
 function poles(cat: string): [string, string] {
   return ORIENTATION_POLES[cat] ?? ["Orientation de gauche", "Orientation de droite"];
 }
@@ -171,17 +177,25 @@ function LeanChip({
   );
 }
 
-// Comparaison de deux entités (groupes) sur l'axe propre à chaque thème.
+// Comparaison de deux entités (groupes ou députés) sur l'axe propre à chaque
+// thème. Les couleurs et libellés sont explicites pour servir aux deux usages ;
+// `sujet` n'ajuste que la formulation de l'intro.
 function OrientationVs({
   rowsA,
   rowsB,
-  a,
-  b,
+  labelA,
+  labelB,
+  colorA,
+  colorB,
+  sujet = "groupe",
 }: {
   rowsA: OrientCatC[];
   rowsB: OrientCatC[];
-  a: string;
-  b: string;
+  labelA: string;
+  labelB: string;
+  colorA: string;
+  colorB: string;
+  sujet?: string;
 }) {
   const mapA = new Map(rowsA.map((r) => [r.categorie, r]));
   const mapB = new Map(rowsB.map((r) => [r.categorie, r]));
@@ -199,8 +213,8 @@ function OrientationVs({
     <div className="mt-6 border-t border-[var(--border)] pt-4">
       <h3 className="mb-1 text-sm font-semibold">Orientation par thème</h3>
       <p className="mb-5 text-xs text-[var(--muted)]">
-        Sens des votes exprimés (<b>pour</b> et <b>contre</b>) de chaque groupe sur l&apos;axe du
-        thème. Chaque groupe penche vers l&apos;un des deux pôles ; le pourcentage indique
+        Sens des votes exprimés (<b>pour</b> et <b>contre</b>) de chaque {sujet} sur l&apos;axe du
+        thème. Chaque {sujet} penche vers l&apos;un des deux pôles ; le pourcentage indique
         l&apos;intensité de ce penchant.
       </p>
       <div className="space-y-6">
@@ -221,15 +235,15 @@ function OrientationVs({
                 {da != null && (
                   <Dot
                     left={da}
-                    color={groupColor(a)}
-                    title={`${a} : ${pct(lean(da, pg, pd).share)} vers ${lean(da, pg, pd).pole}`}
+                    color={colorA}
+                    title={`${labelA} : ${pct(lean(da, pg, pd).share)} vers ${lean(da, pg, pd).pole}`}
                   />
                 )}
                 {dbv != null && (
                   <Dot
                     left={dbv}
-                    color={groupColor(b)}
-                    title={`${b} : ${pct(lean(dbv, pg, pd).share)} vers ${lean(dbv, pg, pd).pole}`}
+                    color={colorB}
+                    title={`${labelB} : ${pct(lean(dbv, pg, pd).share)} vers ${lean(dbv, pg, pd).pole}`}
                   />
                 )}
               </div>
@@ -238,8 +252,8 @@ function OrientationVs({
                 <span>{pd} →</span>
               </div>
               <div className="mt-2 flex flex-col gap-1 text-[11px] sm:flex-row sm:flex-wrap sm:gap-x-5">
-                <LeanChip label={a} color={groupColor(a)} dp={da} poleG={pg} poleD={pd} />
-                <LeanChip label={b} color={groupColor(b)} dp={dbv} poleG={pg} poleD={pd} />
+                <LeanChip label={labelA} color={colorA} dp={da} poleG={pg} poleD={pd} />
+                <LeanChip label={labelB} color={colorB} dp={dbv} poleG={pg} poleD={pd} />
               </div>
             </div>
           );
@@ -598,7 +612,7 @@ function ColonneDepute({
                 fiables.
               </p>
             )}
-            <div className="space-y-2.5">
+            <div className="hidden space-y-2.5 md:block">
               <Metric
                 label="Participation"
                 value={d.participation}
@@ -620,7 +634,7 @@ function ColonneDepute({
                 hint="Alignement hors votes quasi-unanimes"
               />
             </div>
-            <div className="border-t border-[var(--border)] pt-3">
+            <div className="hidden border-t border-[var(--border)] pt-3 md:block">
               <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
                 Orientation par thème
               </div>
@@ -655,6 +669,60 @@ function ColonneDepute({
           <p className="text-sm text-[var(--muted)]">Sélectionnez un député.</p>
         )}
       </div>
+    </div>
+  );
+}
+
+// Vue « face à face » réservée au mobile : reprend le principe de la comparaison
+// de groupes (barres qui s'opposent autour d'un axe + points de couleur sur l'axe
+// d'orientation), une couleur d'identité par député. Elle remplace, sur petit
+// écran, les blocs comparatifs des deux colonnes qui s'y empilent verticalement.
+function DeputeVs({
+  a,
+  b,
+  orientDeputes,
+}: {
+  a: DeputeCompareC;
+  b: DeputeCompareC;
+  orientDeputes: Record<string, OrientCatC[]>;
+}) {
+  const nomA = `${a.prenom} ${a.nom}`;
+  const nomB = `${b.prenom} ${b.nom}`;
+  return (
+    <div className="card p-5">
+      <h2 className="mb-1 text-lg font-semibold">Face à face</h2>
+      <p className="mb-4 text-xs text-[var(--muted)]">
+        Chaque député a sa couleur ; les valeurs se font face autour d&apos;un axe central.
+      </p>
+      <div className="mb-4 flex flex-col gap-1.5 text-sm">
+        {(
+          [
+            [nomA, a.abrege, IDENT_A],
+            [nomB, b.abrege, IDENT_B],
+          ] as [string, string | null, string][]
+        ).map(([nom, abrege, color]) => (
+          <span key={nom} className="flex items-center gap-2">
+            <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: color }} />
+            <b>{nom}</b>
+            <span className="text-xs text-[var(--muted)]">{abrege ?? "Non inscrit"}</span>
+          </span>
+        ))}
+      </div>
+      <div className="divide-y divide-[var(--border)]">
+        <CompareBar label="Participation" a={a.participation} b={b.participation} colorA={IDENT_A} colorB={IDENT_B} kind="pct" />
+        <CompareBar label="Loyauté au groupe" a={a.loyaute} b={b.loyaute} colorA={IDENT_A} colorB={IDENT_B} kind="pct" />
+        <CompareBar label="Alignement présidentiel" a={a.align} b={b.align} colorA={IDENT_A} colorB={IDENT_B} kind="pct" />
+        <CompareBar label="… sur les votes clivants" a={a.alignClivant} b={b.alignClivant} colorA={IDENT_A} colorB={IDENT_B} kind="pct" />
+      </div>
+      <OrientationVs
+        rowsA={orientDeputes[a.uid] ?? []}
+        rowsB={orientDeputes[b.uid] ?? []}
+        labelA={nomA}
+        labelB={nomB}
+        colorA={IDENT_A}
+        colorB={IDENT_B}
+        sujet="député"
+      />
     </div>
   );
 }
@@ -816,6 +884,12 @@ function Deputes({ legs, data }: { legs: string[]; data: Record<string, LegData>
 
       {dA && dB && a !== b && (
         <FaceAFace a={dA} b={dB} data={accordData} loading={!accordPret} />
+      )}
+
+      {dA && dB && a !== b && (
+        <div className="md:hidden">
+          <DeputeVs a={dA} b={dB} orientDeputes={orientDeputes} />
+        </div>
       )}
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -981,7 +1055,15 @@ function GroupeVsGroupe({
         On écarte les votes quasi-unanimes, qui gonflent l&apos;alignement de tous les groupes.
       </p>
 
-      <OrientationVs rowsA={orientGroupes[a] ?? []} rowsB={orientGroupes[b] ?? []} a={a} b={b} />
+      <OrientationVs
+        rowsA={orientGroupes[a] ?? []}
+        rowsB={orientGroupes[b] ?? []}
+        labelA={a}
+        labelB={b}
+        colorA={groupColor(a)}
+        colorB={groupColor(b)}
+        sujet="groupe"
+      />
     </div>
   );
 }
