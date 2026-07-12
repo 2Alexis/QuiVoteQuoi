@@ -162,10 +162,10 @@ export default async function ScrutinsPage({
         </p>
       </div>
 
-      <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
+      <div className="flex flex-wrap gap-2">
         <Link
           href={catHref()}
-          className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-xs font-medium ${
+          className={`whitespace-nowrap rounded-full border px-3 py-1 text-xs font-medium ${
             !categorie
               ? "border-[var(--accent)] bg-[var(--accent)] text-white"
               : "border-[var(--border)] text-[var(--muted)] hover:border-[var(--accent)]"
@@ -180,7 +180,7 @@ export default async function ScrutinsPage({
             <Link
               key={c.categorie}
               href={catHref(c.categorie)}
-              className="shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-xs font-medium"
+              className="whitespace-nowrap rounded-full border px-3 py-1 text-xs font-medium"
               style={
                 active
                   ? { background: color, borderColor: color, color: "white" }

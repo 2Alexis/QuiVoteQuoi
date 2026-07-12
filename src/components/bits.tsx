@@ -873,58 +873,106 @@ export function ProfessionsGroupes({
   const pct = (n: number, d: number) => (d > 0 ? (100 * n) / d : 0);
 
   return (
-    <div className="-mx-1 overflow-x-auto pb-1">
-      <table className="w-full min-w-[640px] border-collapse text-sm">
-        <thead>
-          <tr>
-            <th className="sticky left-0 z-10 bg-[var(--surface)] p-2 text-left font-semibold">
-              Catégorie
-            </th>
-            {gs.map((g) => (
-              <th key={g.abrege} className="p-1.5 text-center align-bottom">
+    <>
+      {/* Ordinateur / tablette : matrice complète catégories × groupes. */}
+      <div className="-mx-1 hidden overflow-x-auto pb-1 sm:block">
+        <table className="w-full min-w-[640px] border-collapse text-sm">
+          <thead>
+            <tr>
+              <th className="sticky left-0 z-10 bg-[var(--surface)] p-2 text-left font-semibold">
+                Catégorie
+              </th>
+              {gs.map((g) => (
+                <th key={g.abrege} className="p-1.5 text-center align-bottom">
+                  <span
+                    className="mx-auto flex h-7 w-11 items-center justify-center rounded-md text-[11px] font-bold text-white"
+                    style={{ background: groupColor(g.abrege) }}
+                    title={g.libelle ?? g.abrege}
+                  >
+                    {g.abrege}
+                  </span>
+                  <div className="mt-1 text-[10px] font-normal text-[var(--muted)]">{g.n}</div>
+                </th>
+              ))}
+              <th className="p-1.5 text-center align-bottom text-[var(--muted)]">
+                Ens.
+                <div className="mt-1 text-[10px] font-normal">{totalDeputes}</div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {categories.map((c) => (
+              <tr key={c.cat} className="border-t border-[var(--border)]">
+                <td className="sticky left-0 z-10 bg-[var(--surface)] p-2 pr-3 font-medium">
+                  {c.cat}
+                </td>
+                {gs.map((g) => {
+                  const n = c.parGroupe[g.abrege] ?? 0;
+                  const p = pct(n, g.n);
+                  return (
+                    <td
+                      key={g.abrege}
+                      className="p-1.5 text-center tabular-nums"
+                      style={{ background: shade(p / 100), color: p > 33 ? "white" : undefined }}
+                      title={`${n} député${n > 1 ? "s" : ""} sur ${g.n}`}
+                    >
+                      {p > 0 ? `${Math.round(p)}%` : "·"}
+                    </td>
+                  );
+                })}
+                <td className="p-1.5 text-center tabular-nums font-medium text-[var(--muted)]">
+                  {Math.round(pct(c.total, totalDeputes))}%
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Téléphone : une carte dépliable par groupe (pas de défilement latéral). */}
+      <div className="space-y-2 sm:hidden">
+        {gs.map((g) => {
+          const rows = categories
+            .map((c) => ({ cat: c.cat, n: c.parGroupe[g.abrege] ?? 0, p: pct(c.parGroupe[g.abrege] ?? 0, g.n) }))
+            .filter((r) => r.n > 0)
+            .sort((a, b) => b.p - a.p);
+          const color = groupColor(g.abrege);
+          return (
+            <details key={g.abrege} className="group card overflow-hidden">
+              <summary className="flex cursor-pointer list-none items-center gap-2 p-3">
                 <span
-                  className="mx-auto flex h-7 w-11 items-center justify-center rounded-md text-[11px] font-bold text-white"
-                  style={{ background: groupColor(g.abrege) }}
-                  title={g.libelle ?? g.abrege}
+                  className="flex h-6 min-w-[2.75rem] items-center justify-center rounded-md px-1.5 text-[11px] font-bold text-white"
+                  style={{ background: color }}
                 >
                   {g.abrege}
                 </span>
-                <div className="mt-1 text-[10px] font-normal text-[var(--muted)]">{g.n}</div>
-              </th>
-            ))}
-            <th className="p-1.5 text-center align-bottom text-[var(--muted)]">
-              Ens.
-              <div className="mt-1 text-[10px] font-normal">{totalDeputes}</div>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {categories.map((c) => (
-            <tr key={c.cat} className="border-t border-[var(--border)]">
-              <td className="sticky left-0 z-10 bg-[var(--surface)] p-2 pr-3 font-medium">
-                {c.cat}
-              </td>
-              {gs.map((g) => {
-                const n = c.parGroupe[g.abrege] ?? 0;
-                const p = pct(n, g.n);
-                return (
-                  <td
-                    key={g.abrege}
-                    className="p-1.5 text-center tabular-nums"
-                    style={{ background: shade(p / 100), color: p > 33 ? "white" : undefined }}
-                    title={`${n} député${n > 1 ? "s" : ""} sur ${g.n}`}
-                  >
-                    {p > 0 ? `${Math.round(p)}%` : "·"}
-                  </td>
-                );
-              })}
-              <td className="p-1.5 text-center tabular-nums font-medium text-[var(--muted)]">
-                {Math.round(pct(c.total, totalDeputes))}%
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+                <span className="min-w-0 flex-1 truncate text-sm">{g.libelle ?? g.abrege}</span>
+                <span className="shrink-0 text-xs text-[var(--muted)]">{g.n} dép.</span>
+                <span className="shrink-0 text-[var(--muted)] transition-transform group-open:rotate-180" aria-hidden>
+                  ▾
+                </span>
+              </summary>
+              <div className="space-y-2 border-t border-[var(--border)] p-3">
+                {rows.map((r) => (
+                  <div key={r.cat} className="space-y-1">
+                    <div className="flex items-center justify-between gap-2 text-xs">
+                      <span className="min-w-0 truncate" title={r.cat}>
+                        {r.cat}
+                      </span>
+                      <span className="shrink-0 tabular-nums text-[var(--muted)]">
+                        {Math.round(r.p)}%
+                      </span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-[var(--border)]">
+                      <div className="h-full rounded-full" style={{ width: `${r.p}%`, background: color }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </details>
+          );
+        })}
+      </div>
+    </>
   );
 }

@@ -1,6 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
+
+// Abonnement vide : la capacité de partage natif ne change pas au fil de la vie
+// de la page, on n'a donc jamais à re-notifier React après le premier rendu.
+const noopSubscribe = () => () => {};
 
 // Boutons de partage réutilisables (fiches scrutin / député / comparateur).
 // Le partage natif (feuille système : Instagram, WhatsApp, Messages…) n'apparaît
@@ -13,12 +17,14 @@ export function ShareButtons({
   title: string;
   className?: string;
 }) {
-  const [canShare, setCanShare] = useState(false);
+  // Lu via useSyncExternalStore : `false` au rendu serveur et à l'hydratation
+  // (pas de décalage), puis la vraie valeur côté client — sans setState en effet.
+  const canShare = useSyncExternalStore(
+    noopSubscribe,
+    () => typeof navigator !== "undefined" && typeof navigator.share === "function",
+    () => false,
+  );
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    setCanShare(typeof navigator !== "undefined" && typeof navigator.share === "function");
-  }, []);
 
   const currentUrl = () => window.location.href;
 
@@ -52,7 +58,6 @@ export function ShareButtons({
 
   return (
     <div className={`flex flex-wrap items-center gap-2 ${className}`}>
-      <span className="text-xs font-medium text-[var(--muted)]">Partager :</span>
       {canShare && (
         <button type="button" onClick={nativeShare} className={btn} aria-label="Partager">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5" aria-hidden>
@@ -76,7 +81,7 @@ export function ShareButtons({
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5" aria-hidden>
               <path d="M20 6 9 17l-5-5" />
             </svg>
-            Lien copié
+            Copié
           </>
         ) : (
           <>
@@ -84,7 +89,7 @@ export function ShareButtons({
               <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
               <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
             </svg>
-            Copier le lien
+            Copier
           </>
         )}
       </button>

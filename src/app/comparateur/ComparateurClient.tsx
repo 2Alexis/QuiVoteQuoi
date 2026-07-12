@@ -1017,7 +1017,7 @@ function GroupPicker({
             </option>
           ))}
         </select>
-        <div className="truncate text-xs text-[var(--muted)]" title={libelle ?? ""}>
+        <div className="hidden truncate text-xs text-[var(--muted)] sm:block" title={libelle ?? ""}>
           {libelle ?? "—"}
         </div>
         {effectif != null && (

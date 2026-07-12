@@ -93,12 +93,14 @@ export default async function ScrutinDetail({ params }: { params: Promise<{ uid:
         <Link href="/scrutins" className="text-sm text-[var(--muted)] link-accent">
           ← Scrutins
         </Link>
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[var(--muted)]">
-          <span>{formatDate(sc.date)}</span>
-          <span>·</span>
-          <span>n°{sc.numero}</span>
-          <span>·</span>
-          <span>{sc.type_vote}</span>
+        <p className="mt-2 text-xs text-[var(--muted)]">
+          {`${formatDate(sc.date)} · n°${sc.numero} · ${sc.type_vote}`}
+        </p>
+        <ScrutinCard titre={sc.titre} as="h1" size="lg" className="mt-2" />
+        {sc.demandeur && (
+          <p className="mt-1 text-sm text-[var(--muted)]">Demandé par {sc.demandeur}</p>
+        )}
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <span className={`badge ${b.cls}`}>{b.label}</span>
           {sc.categorie && (
             <Link href={`/scrutins?leg=${sc.legislature}&cat=${encodeURIComponent(sc.categorie)}`}>
@@ -111,10 +113,6 @@ export default async function ScrutinDetail({ params }: { params: Promise<{ uid:
             score={sc.orientation_score}
           />
         </div>
-        <ScrutinCard titre={sc.titre} as="h1" size="lg" className="mt-2" />
-        {sc.demandeur && (
-          <p className="mt-1 text-sm text-[var(--muted)]">Demandé par {sc.demandeur}</p>
-        )}
         <a
           href={scrutinUrlOfficiel(sc.legislature, sc.numero)}
           target="_blank"
@@ -141,31 +139,37 @@ export default async function ScrutinDetail({ params }: { params: Promise<{ uid:
         </div>
       </div>
 
-      <div className="card p-5">
-        <div className="mb-3 flex items-center gap-4">
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold">Résultat du vote</h2>
+          <p className="text-sm text-[var(--muted)]">
+            Décompte des voix sur l&apos;ensemble des députés.
+          </p>
+        </div>
+        <div className="card p-5">
           <VoteBar
             pour={sc.pour ?? 0}
             contre={sc.contre ?? 0}
             abstention={sc.abstentions ?? 0}
             nonvotant={sc.non_votants ?? 0}
           />
-        </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {[
-            ["Pour", sc.pour, POSITION_COLOR.pour],
-            ["Contre", sc.contre, POSITION_COLOR.contre],
-            ["Abstention", sc.abstentions, POSITION_COLOR.abstention],
-            ["Non-votants", sc.non_votants, POSITION_COLOR.nonvotant],
-          ].map(([l, v, c]) => (
-            <div key={l as string}>
-              <div className="stat-num text-2xl font-bold" style={{ color: c as string }}>
-                {v ?? 0}
+          <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {[
+              ["Pour", sc.pour, POSITION_COLOR.pour],
+              ["Contre", sc.contre, POSITION_COLOR.contre],
+              ["Abstention", sc.abstentions, POSITION_COLOR.abstention],
+              ["Non-votants", sc.non_votants, POSITION_COLOR.nonvotant],
+            ].map(([l, v, c]) => (
+              <div key={l as string} className="text-center">
+                <div className="stat-num text-2xl font-bold" style={{ color: c as string }}>
+                  {v ?? 0}
+                </div>
+                <div className="mt-0.5 text-xs text-[var(--muted)]">{l as string}</div>
               </div>
-              <div className="text-xs text-[var(--muted)]">{l as string}</div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      </section>
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Position des groupes</h2>
