@@ -32,6 +32,7 @@ export function pageMeta(opts: {
       description: opts.description,
     },
     twitter: {
+      card: "summary_large_image",
       title: ogTitle,
       description: opts.description,
     },

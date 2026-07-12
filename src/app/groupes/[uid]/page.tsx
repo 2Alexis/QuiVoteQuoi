@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { pageMeta } from "@/lib/site";
+import { pageMeta, SITE_URL } from "@/lib/site";
 import {
   groupe,
   deputesDuGroupe,
@@ -25,6 +25,7 @@ import {
 } from "@/components/bits";
 import { GroupLogo } from "@/components/GroupLogo";
 import { ScrutinCard } from "@/components/ScrutinCard";
+import { ShareButtons } from "@/components/ShareButtons";
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +73,16 @@ export default async function GroupeDetail({
   const MEMBRES_APERCU = 12;
   const membresApercu = membres.slice(0, MEMBRES_APERCU);
   const membresReste = membres.slice(MEMBRES_APERCU);
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: g.libelle,
+    ...(g.abrege ? { alternateName: g.abrege } : {}),
+    url: `${SITE_URL}/groupes/${uid}`,
+    parentOrganization: { "@type": "Organization", name: "Assemblée nationale" },
+    ...(membres.length ? { numberOfEmployees: membres.length } : {}),
+  };
   const MemberCard = (d: (typeof membres)[number]) => (
     <Link
       key={d.uid}
@@ -87,17 +98,25 @@ export default async function GroupeDetail({
 
   return (
     <div className="space-y-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
       <div>
         <Link href="/groupes" className="text-sm text-[var(--muted)] link-accent">
           ← Groupes
         </Link>
-        <div className="mt-3 flex items-center gap-4">
+        <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center">
           <GroupLogo abrege={g.abrege} libelle={g.libelle} size={64} radius="1rem" />
-          <div>
+          <div className="min-w-0">
             <h1 className="text-2xl font-bold">{g.libelle}</h1>
             <p className="text-sm text-[var(--muted)]">
               {membres.length} députés · depuis le {formatDate(g.date_debut)}
             </p>
+            <ShareButtons
+              title={`${g.libelle}${g.abrege ? ` (${g.abrege})` : ""} — ses votes à l'Assemblée nationale`}
+              className="mt-3"
+            />
           </div>
         </div>
       </div>

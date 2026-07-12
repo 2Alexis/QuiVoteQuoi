@@ -4,6 +4,7 @@ import { scrutin, ventilationScrutin, votesNominatifsScrutin } from "@/lib/db";
 import { formatDate, sortBadge, POSITION_COLOR, scrutinUrlOfficiel } from "@/lib/ui";
 import { GroupBadge, VoteBar, CategoriePill, OrientationPill, HemicycleVote } from "@/components/bits";
 import { ScrutinCard } from "@/components/ScrutinCard";
+import { ShareButtons } from "@/components/ShareButtons";
 import { parseScrutin } from "@/lib/parseScrutin";
 import { pageMeta } from "@/lib/site";
 import type { Metadata } from "next";
@@ -32,7 +33,7 @@ export async function generateMetadata({
   if (!sc) return { title: "Scrutin introuvable", robots: { index: false } };
   const p = parseScrutin(sc.titre);
   const label = p.loi ? `${p.type} · ${p.loi}` : p.action ?? sc.titre ?? `Scrutin n°${sc.numero}`;
-  const titre = `Scrutin n°${sc.numero} — ${label}`.slice(0, 110);
+  const titre = `${label} — vote n°${sc.numero}`.slice(0, 110);
   const desc = `${formatDate(sc.date)} · ${sortBadge(sc.sort_code).label}. ${sc.pour ?? 0} pour, ${
     sc.contre ?? 0
   } contre, ${sc.abstentions ?? 0} abstention. ${sc.titre ?? ""}`
@@ -123,6 +124,21 @@ export default async function ScrutinDetail({ params }: { params: Promise<{ uid:
           Voir le détail officiel du scrutin et le texte de loi
           <span aria-hidden>↗</span>
         </a>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <ShareButtons title={`${sc.titre ?? "Scrutin"} — ${b.label}`} />
+          <a
+            href={`/scrutins/${uid}/partage`}
+            download={`quivotequoi-scrutin-${sc.numero}.png`}
+            className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] px-3 py-1.5 text-xs font-medium text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5" aria-hidden>
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <path d="M7 10l5 5 5-5" />
+              <path d="M12 15V3" />
+            </svg>
+            Visuel à partager
+          </a>
+        </div>
       </div>
 
       <div className="card p-5">

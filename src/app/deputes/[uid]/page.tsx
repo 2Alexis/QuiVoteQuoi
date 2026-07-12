@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { pageMeta } from "@/lib/site";
+import { pageMeta, SITE_URL } from "@/lib/site";
 import {
   depute,
   statsDepute,
@@ -22,6 +22,7 @@ import {
   MetricRing,
 } from "@/components/bits";
 import { ScrutinCard } from "@/components/ScrutinCard";
+import { ShareButtons } from "@/components/ShareButtons";
 import { DeputePhoto } from "@/components/DeputePhoto";
 
 // Fiche d'un député : le rendu ne dépend que de l'uid (aucun searchParams) et les
@@ -52,7 +53,7 @@ export async function generateMetadata({
   const desc = `${fonction}${
     d.groupe_libelle ? ` du groupe ${d.groupe_libelle}` : " à l'Assemblée nationale"
   }. Votes, participation, loyauté, orientation et comparaisons de ${nom}.`;
-  return pageMeta({ title: `${nom}${grp}`, description: desc, path: `/deputes/${uid}` });
+  return pageMeta({ title: `${nom} — ${fonction}${grp}`, description: desc, path: `/deputes/${uid}` });
 }
 
 export default async function DeputeDetail({ params }: { params: Promise<{ uid: string }> }) {
@@ -67,8 +68,25 @@ export default async function DeputeDetail({ params }: { params: Promise<{ uid: 
   const parCategorie = votesDeputeParCategorie(uid);
   const condamne = condamnations(uid);
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: `${d.prenom ?? ""} ${d.nom ?? ""}`.trim(),
+    jobTitle: d.civ === "Mme" ? "Députée" : "Député",
+    image: deputePhotoUrl(uid, leg),
+    url: `${SITE_URL}/deputes/${uid}`,
+    affiliation: { "@type": "Organization", name: "Assemblée nationale" },
+    ...(d.groupe_libelle
+      ? { memberOf: { "@type": "Organization", name: d.groupe_libelle } }
+      : {}),
+  };
+
   return (
     <div className="space-y-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
       <div>
         <Link href="/deputes" className="text-sm text-[var(--muted)] link-accent">
           ← Députés
@@ -99,6 +117,10 @@ export default async function DeputeDetail({ params }: { params: Promise<{ uid: 
                 : "Circonscription non renseignée"}
               {d.profession ? ` · ${d.profession}` : ""}
             </p>
+            <ShareButtons
+              title={`${d.prenom} ${d.nom}, ${d.civ === "Mme" ? "députée" : "député"} — ses votes à l'Assemblée`}
+              className="mt-3"
+            />
           </div>
         </div>
       </div>
