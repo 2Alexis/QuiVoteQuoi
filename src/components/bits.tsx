@@ -186,8 +186,8 @@ export function MetricRing({ label, value, hint }: { label: string; value: numbe
   const C = 2 * Math.PI * R;
   const off = C * (1 - v);
   return (
-    <div className="card flex items-center gap-4 p-4">
-      <div className="relative h-16 w-16 shrink-0">
+    <div className="card flex flex-col items-center gap-2 p-3 text-center sm:flex-row sm:items-center sm:gap-4 sm:p-4 sm:text-left">
+      <div className="relative h-14 w-14 shrink-0 sm:h-16 sm:w-16">
         <svg viewBox="0 0 64 64" className="h-full w-full -rotate-90">
           <circle cx="32" cy="32" r={R} fill="none" stroke="var(--border)" strokeWidth="7" />
           <circle
@@ -207,8 +207,8 @@ export function MetricRing({ label, value, hint }: { label: string; value: numbe
         </span>
       </div>
       <div className="min-w-0">
-        <div className="text-sm font-semibold leading-tight">{label}</div>
-        <div className="mt-1 text-[11px] leading-snug text-[var(--muted)]">{hint}</div>
+        <div className="text-xs font-semibold leading-tight sm:text-sm">{label}</div>
+        <div className="mt-1 hidden text-[11px] leading-snug text-[var(--muted)] sm:block">{hint}</div>
       </div>
     </div>
   );

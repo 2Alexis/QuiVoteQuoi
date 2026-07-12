@@ -116,26 +116,26 @@ export default async function ScrutinsPage({
         </button>
       </form>
 
-      <div className="flex items-center gap-3">
-        <Link
-          href={loiHref(!loisOnly)}
-          role="switch"
-          aria-checked={loisOnly}
-          className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-            loisOnly
-              ? "border-[var(--accent)] bg-[var(--accent)] text-white"
-              : "border-[var(--border)] text-[var(--muted)] hover:border-[var(--accent)]"
-          }`}
-        >
-          <span
-            className={`inline-block h-2 w-2 rounded-full ${
-              loisOnly ? "bg-white" : "bg-[var(--muted)]"
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href={loiHref(!loisOnly)}
+            role="switch"
+            aria-checked={loisOnly}
+            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+              loisOnly
+                ? "border-[var(--accent)] bg-[var(--accent)] text-white"
+                : "border-[var(--border)] text-[var(--muted)] hover:border-[var(--accent)]"
             }`}
-          />
-          Lois uniquement
-        </Link>
-        {loisOnly ? (
-          <>
+          >
+            <span
+              className={`inline-block h-2 w-2 rounded-full ${
+                loisOnly ? "bg-white" : "bg-[var(--muted)]"
+              }`}
+            />
+            Lois uniquement
+          </Link>
+          {loisOnly && (
             <Link
               href={budgetHref(!includeBudget)}
               role="switch"
@@ -153,21 +153,19 @@ export default async function ScrutinsPage({
               />
               Inclure le budget
             </Link>
-            <span className="text-xs text-[var(--muted)]">
-              Ratifications comprises · le budget (PLF/PLFSS) peut être exclu.
-            </span>
-          </>
-        ) : (
-          <span className="text-xs text-[var(--muted)]">
-            Vote final sur l&apos;ensemble d&apos;un texte — sans amendements, articles ni motions.
-          </span>
-        )}
+          )}
+        </div>
+        <p className="text-xs text-[var(--muted)]">
+          {loisOnly
+            ? "Ratifications comprises · le budget (PLF/PLFSS) peut être exclu."
+            : "Vote final sur l'ensemble d'un texte — sans amendements, articles ni motions."}
+        </p>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
         <Link
           href={catHref()}
-          className={`rounded-full border px-3 py-1 text-xs font-medium ${
+          className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-xs font-medium ${
             !categorie
               ? "border-[var(--accent)] bg-[var(--accent)] text-white"
               : "border-[var(--border)] text-[var(--muted)] hover:border-[var(--accent)]"
@@ -182,7 +180,7 @@ export default async function ScrutinsPage({
             <Link
               key={c.categorie}
               href={catHref(c.categorie)}
-              className="rounded-full border px-3 py-1 text-xs font-medium"
+              className="shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-xs font-medium"
               style={
                 active
                   ? { background: color, borderColor: color, color: "white" }

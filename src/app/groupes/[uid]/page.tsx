@@ -103,7 +103,7 @@ export default async function GroupeDetail({
       </div>
 
       {(gstats.cohesion > 0 || gstats.participation > 0) && (
-        <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <section className="grid grid-cols-2 gap-3">
           <MetricRing
             label="Cohésion interne"
             value={gstats.cohesion}
@@ -198,9 +198,9 @@ export default async function GroupeDetail({
                     {s.pour} / {s.contre} / {s.abstention}
                   </span>
                 </div>
-                <div className="mt-1 flex items-start justify-between gap-3">
+                <div className="mt-1 flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                   <ScrutinCard titre={s.titre} className="min-w-0 flex-1" />
-                  <div className="flex shrink-0 flex-wrap justify-end gap-1">
+                  <div className="flex flex-wrap gap-1 sm:shrink-0 sm:justify-end">
                     <CategoriePill categorie={s.categorie} />
                     <OrientationPill
                       categorie={s.categorie}
