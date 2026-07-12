@@ -312,19 +312,20 @@ export default async function DeputesPage({
             <div className="mb-2 text-center text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">
               Groupe majoritaire par département
             </div>
-            <div className="flex flex-wrap justify-center gap-1.5">
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 sm:grid-cols-3 lg:grid-cols-3">
               {legende.map((l) => (
-                <span
+                <div
                   key={l.abrege}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1 text-xs"
+                  title={l.libelle}
+                  className="flex items-center gap-1.5 text-xs"
                 >
                   <span
                     className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
                     style={{ background: groupColor(l.abrege) }}
                   />
-                  <span className="font-semibold">{l.abrege}</span>
-                  <span className="text-[var(--muted)]">{l.libelle}</span>
-                </span>
+                  <span className="shrink-0 font-semibold">{l.abrege}</span>
+                  <span className="truncate text-[var(--muted)]">{l.libelle}</span>
+                </div>
               ))}
             </div>
           </div>

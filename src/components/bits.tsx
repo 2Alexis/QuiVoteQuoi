@@ -270,7 +270,7 @@ export function CategorieVotesList({
   return (
     <div className="space-y-3">
       <p className="text-xs leading-relaxed text-[var(--muted)]">
-        Pour chaque thème : <b className="text-[var(--foreground)]">Approbation</b> = répartition des
+        <b className="text-[var(--foreground)]">Approbation</b> = répartition des
         votes (pour / contre / abstention), tous textes confondus ;{" "}
         <b className="text-[var(--foreground)]">Orientation</b> = tendance gauche-droite, mesurée
         uniquement sur les textes clairement marqués à gauche ou à droite.

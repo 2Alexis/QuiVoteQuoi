@@ -533,6 +533,74 @@ function Metric({
   );
 }
 
+// Sélecteur d'un député : filtre par groupe, filtre par nom, puis choix dans la
+// liste résultante (plafonnée pour rester fluide). Partagé par les colonnes
+// desktop et la vue face à face mobile, seuls endroits où l'on change de député.
+function DeputePicker({
+  value,
+  onChange,
+  autre,
+  deputes,
+  groupesDispo,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  autre: string;
+  deputes: DeputeCompareC[];
+  groupesDispo: string[];
+}) {
+  const [q, setQ] = useState("");
+  const [gf, setGf] = useState("");
+  // La liste est plafonnée pour rester fluide, mais on garantit que le député
+  // déjà sélectionné y figure : sinon le <select> contrôlé, ne trouvant pas sa
+  // valeur, retomberait sur la première option et afficherait un autre nom.
+  const filtered = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    let base = deputes;
+    if (gf) base = base.filter((d) => d.abrege === gf);
+    if (s) base = base.filter((d) => `${d.prenom} ${d.nom}`.toLowerCase().includes(s));
+    const capped = base.slice(0, 300);
+    if (value && !capped.some((d) => d.uid === value)) {
+      const sel = deputes.find((d) => d.uid === value);
+      if (sel) return [sel, ...capped];
+    }
+    return capped;
+  }, [q, gf, deputes, value]);
+  return (
+    <div className="space-y-2">
+      <select
+        value={gf}
+        onChange={(e) => setGf(e.target.value)}
+        className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-sm"
+      >
+        <option value="">Tous les groupes</option>
+        {groupesDispo.map((g) => (
+          <option key={g} value={g}>
+            {g}
+          </option>
+        ))}
+      </select>
+      <input
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="Filtrer par nom…"
+        className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-sm"
+      />
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-sm font-semibold"
+      >
+        {filtered.map((x) => (
+          <option key={x.uid} value={x.uid} disabled={x.uid === autre}>
+            {x.prenom} {x.nom} {x.abrege ? `(${x.abrege})` : ""}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 function ColonneDepute({
   value,
   onChange,
@@ -552,49 +620,18 @@ function ColonneDepute({
   condamDeputes: Record<string, CondamInfo[]>;
   orientOrder: string[];
 }) {
-  const [q, setQ] = useState("");
-  const [gf, setGf] = useState("");
-  const filtered = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    let base = deputes;
-    if (gf) base = base.filter((d) => d.abrege === gf);
-    if (s) base = base.filter((d) => `${d.prenom} ${d.nom}`.toLowerCase().includes(s));
-    return base.slice(0, 300);
-  }, [q, gf, deputes]);
   const d = deputes.find((x) => x.uid === value);
   return (
     <div className="card overflow-hidden">
       <div className="h-1.5" style={{ background: groupColor(d?.abrege) }} />
       <div className="space-y-3 p-4">
-        <select
-          value={gf}
-          onChange={(e) => setGf(e.target.value)}
-          className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-sm"
-        >
-          <option value="">Tous les groupes</option>
-          {groupesDispo.map((g) => (
-            <option key={g} value={g}>
-              {g}
-            </option>
-          ))}
-        </select>
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Filtrer par nom…"
-          className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-sm"
-        />
-        <select
+        <DeputePicker
           value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-sm font-semibold"
-        >
-          {filtered.map((x) => (
-            <option key={x.uid} value={x.uid} disabled={x.uid === autre}>
-              {x.prenom} {x.nom} {x.abrege ? `(${x.abrege})` : ""}
-            </option>
-          ))}
-        </select>
+          onChange={onChange}
+          autre={autre}
+          deputes={deputes}
+          groupesDispo={groupesDispo}
+        />
         {d ? (
           <>
             <div>
@@ -612,7 +649,7 @@ function ColonneDepute({
                 fiables.
               </p>
             )}
-            <div className="hidden space-y-2.5 md:block">
+            <div className="space-y-2.5">
               <Metric
                 label="Participation"
                 value={d.participation}
@@ -634,7 +671,7 @@ function ColonneDepute({
                 hint="Alignement hors votes quasi-unanimes"
               />
             </div>
-            <div className="hidden border-t border-[var(--border)] pt-3 md:block">
+            <div className="border-t border-[var(--border)] pt-3">
               <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
                 Orientation par thème
               </div>
@@ -675,54 +712,124 @@ function ColonneDepute({
 
 // Vue « face à face » réservée au mobile : reprend le principe de la comparaison
 // de groupes (barres qui s'opposent autour d'un axe + points de couleur sur l'axe
-// d'orientation), une couleur d'identité par député. Elle remplace, sur petit
-// écran, les blocs comparatifs des deux colonnes qui s'y empilent verticalement.
+// d'orientation), une couleur d'identité par député. Sur petit écran, les colonnes
+// détaillées sont masquées : cette carte porte donc aussi les sélecteurs (en haut,
+// à portée) et les condamnations, pour ne rien perdre du contenu des colonnes.
 function DeputeVs({
   a,
   b,
+  setA,
+  setB,
+  deputes,
+  groupesDispo,
   orientDeputes,
+  condamDeputes,
 }: {
   a: DeputeCompareC;
   b: DeputeCompareC;
+  setA: (v: string) => void;
+  setB: (v: string) => void;
+  deputes: DeputeCompareC[];
+  groupesDispo: string[];
   orientDeputes: Record<string, OrientCatC[]>;
+  condamDeputes: Record<string, CondamInfo[]>;
 }) {
   const nomA = `${a.prenom} ${a.nom}`;
   const nomB = `${b.prenom} ${b.nom}`;
+  const cols: [DeputeCompareC, (v: string) => void, string, string][] = [
+    [a, setA, b.uid, IDENT_A],
+    [b, setB, a.uid, IDENT_B],
+  ];
   return (
-    <div className="card p-5">
-      <h2 className="mb-1 text-lg font-semibold">Face à face</h2>
-      <p className="mb-4 text-xs text-[var(--muted)]">
-        Chaque député a sa couleur ; les valeurs se font face autour d&apos;un axe central.
-      </p>
-      <div className="mb-4 flex flex-col gap-1.5 text-sm">
-        {(
-          [
-            [nomA, a.abrege, IDENT_A],
-            [nomB, b.abrege, IDENT_B],
-          ] as [string, string | null, string][]
-        ).map(([nom, abrege, color]) => (
-          <span key={nom} className="flex items-center gap-2">
-            <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: color }} />
-            <b>{nom}</b>
-            <span className="text-xs text-[var(--muted)]">{abrege ?? "Non inscrit"}</span>
-          </span>
+    <div className="card space-y-5 p-5">
+      <div className="grid grid-cols-2 gap-3">
+        {cols.map(([dep, set, autre, color]) => (
+          <div key={dep.uid} className="space-y-2">
+            <div className="flex items-start gap-1.5">
+              <span
+                className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ background: color }}
+              />
+              <div className="min-w-0">
+                <Link
+                  href={`/deputes/${dep.uid}`}
+                  className="block truncate text-sm font-bold leading-tight link-accent"
+                >
+                  {dep.prenom} {dep.nom}
+                </Link>
+                <div className="truncate text-xs text-[var(--muted)]">
+                  {dep.abrege ?? "Non inscrit"}
+                </div>
+              </div>
+            </div>
+            <DeputePicker
+              value={dep.uid}
+              onChange={set}
+              autre={autre}
+              deputes={deputes}
+              groupesDispo={groupesDispo}
+            />
+            {dep.n_exprime < SEUIL_FAIBLE && (
+              <p
+                className="rounded-md px-2 py-1 text-[11px] font-medium leading-snug"
+                style={{ color: "#9A6700", background: "#E7A1001f" }}
+              >
+                Échantillon faible : {dep.n_exprime} votes exprimés.
+              </p>
+            )}
+          </div>
         ))}
       </div>
-      <div className="divide-y divide-[var(--border)]">
-        <CompareBar label="Participation" a={a.participation} b={b.participation} colorA={IDENT_A} colorB={IDENT_B} kind="pct" />
-        <CompareBar label="Loyauté au groupe" a={a.loyaute} b={b.loyaute} colorA={IDENT_A} colorB={IDENT_B} kind="pct" />
-        <CompareBar label="Alignement présidentiel" a={a.align} b={b.align} colorA={IDENT_A} colorB={IDENT_B} kind="pct" />
-        <CompareBar label="… sur les votes clivants" a={a.alignClivant} b={b.alignClivant} colorA={IDENT_A} colorB={IDENT_B} kind="pct" />
+
+      <div className="border-t border-[var(--border)] pt-4">
+        <h2 className="mb-1 text-lg font-semibold">Face à face</h2>
+        <p className="mb-4 text-xs text-[var(--muted)]">
+          Chaque député a sa couleur ; les valeurs se font face autour d&apos;un axe central.
+        </p>
+        <div className="divide-y divide-[var(--border)]">
+          <CompareBar label="Participation" a={a.participation} b={b.participation} colorA={IDENT_A} colorB={IDENT_B} kind="pct" />
+          <CompareBar label="Loyauté au groupe" a={a.loyaute} b={b.loyaute} colorA={IDENT_A} colorB={IDENT_B} kind="pct" />
+          <CompareBar label="Alignement présidentiel" a={a.align} b={b.align} colorA={IDENT_A} colorB={IDENT_B} kind="pct" />
+          <CompareBar label="… sur les votes clivants" a={a.alignClivant} b={b.alignClivant} colorA={IDENT_A} colorB={IDENT_B} kind="pct" />
+        </div>
+        <OrientationVs
+          rowsA={orientDeputes[a.uid] ?? []}
+          rowsB={orientDeputes[b.uid] ?? []}
+          labelA={nomA}
+          labelB={nomB}
+          colorA={IDENT_A}
+          colorB={IDENT_B}
+          sujet="député"
+        />
       </div>
-      <OrientationVs
-        rowsA={orientDeputes[a.uid] ?? []}
-        rowsB={orientDeputes[b.uid] ?? []}
-        labelA={nomA}
-        labelB={nomB}
-        colorA={IDENT_A}
-        colorB={IDENT_B}
-        sujet="député"
-      />
+
+      <div className="grid grid-cols-2 gap-3 border-t border-[var(--border)] pt-4">
+        {cols.map(([dep, , , color]) => {
+          const cs = condamDeputes[dep.uid] ?? [];
+          return (
+            <div key={dep.uid}>
+              <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: color }} />
+                Condamnations
+              </div>
+              {cs.length === 0 ? (
+                <p className="text-xs text-[var(--muted)]">Aucune recensée.</p>
+              ) : (
+                <ul className="space-y-1">
+                  {cs.map((c, i) => (
+                    <li key={i} className="text-sm leading-snug">
+                      <span className="capitalize">{c.infraction}</span>
+                      {c.date && (
+                        <span className="text-xs text-[var(--muted)]"> · {c.date.slice(0, 4)}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -888,11 +995,20 @@ function Deputes({ legs, data }: { legs: string[]; data: Record<string, LegData>
 
       {dA && dB && a !== b && (
         <div className="md:hidden">
-          <DeputeVs a={dA} b={dB} orientDeputes={orientDeputes} />
+          <DeputeVs
+            a={dA}
+            b={dB}
+            setA={setA}
+            setB={setB}
+            deputes={deputes}
+            groupesDispo={groupesDispo}
+            orientDeputes={orientDeputes}
+            condamDeputes={condamDeputes}
+          />
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="hidden gap-4 md:grid md:grid-cols-2">
         <ColonneDepute
           value={a}
           onChange={setA}
