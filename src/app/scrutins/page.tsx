@@ -3,6 +3,7 @@ import { scrutins, legislatures, categoriesScrutins, DEFAULT_LEG } from "@/lib/d
 import { formatDate, sortBadge, categorieColor } from "@/lib/ui";
 import { VoteBar, LegSwitcher, CategoriePill, OrientationPill } from "@/components/bits";
 import { ScrutinCard } from "@/components/ScrutinCard";
+import { CategoryFilterSelect } from "@/components/CategoryFilterSelect";
 import type { Metadata } from "next";
 import { pageMeta } from "@/lib/site";
 
@@ -109,7 +110,7 @@ export default async function ScrutinsPage({
           name="q"
           defaultValue={search}
           placeholder="Rechercher un scrutin (loi, amendement, motion…)"
-          className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm outline-none focus:border-[var(--accent)]"
+          className="min-w-0 flex-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm outline-none focus:border-[var(--accent)]"
         />
         <button className="rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white">
           Rechercher
@@ -162,7 +163,20 @@ export default async function ScrutinsPage({
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="sm:hidden">
+        <CategoryFilterSelect
+          current={categorie ?? ""}
+          options={[
+            { value: "", label: "Toutes les catégories", href: catHref() },
+            ...cats.map((c) => ({
+              value: c.categorie,
+              label: `${c.categorie} · ${c.n}`,
+              href: catHref(c.categorie),
+            })),
+          ]}
+        />
+      </div>
+      <div className="hidden flex-wrap gap-2 sm:flex">
         <Link
           href={catHref()}
           className={`whitespace-nowrap rounded-full border px-3 py-1 text-xs font-medium ${
