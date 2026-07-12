@@ -172,12 +172,12 @@ export default async function DeputesPage({
           name="q"
           defaultValue={search}
           placeholder="Rechercher un député…"
-          className="min-w-56 flex-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm outline-none focus:border-[var(--accent)]"
+          className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm outline-none focus:border-[var(--accent)] sm:min-w-56 sm:flex-1"
         />
         <select
           name="g"
           defaultValue={g ?? ""}
-          className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm"
+          className="w-full min-w-0 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm sm:w-auto"
         >
           <option value="">Tous les groupes</option>
           {gs.map((x) => (
@@ -186,7 +186,7 @@ export default async function DeputesPage({
             </option>
           ))}
         </select>
-        <button className="rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white">
+        <button className="w-full rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white sm:w-auto">
           Filtrer
         </button>
       </form>

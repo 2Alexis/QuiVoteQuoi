@@ -153,7 +153,7 @@ export default function Home() {
           </Link>
         </div>
         <div className="card grid gap-6 p-5 lg:grid-cols-2">
-          <div className="space-y-4">
+          <div className="min-w-0 space-y-4">
             <Hemicycle groupes={gs} />
             {blocs.length > 0 && (
               <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1.5">
@@ -167,7 +167,7 @@ export default function Home() {
               </ul>
             )}
           </div>
-          <div className="space-y-1.5">
+          <div className="min-w-0 space-y-1.5">
             <div className="mb-1 flex items-baseline justify-between">
               <span className="text-sm font-medium">Groupes parlementaires</span>
               <span className="text-xs text-[var(--muted)]">{totalSieges} sièges</span>

@@ -169,17 +169,17 @@ export function TetesAffiche({
   if (groupesAvecFigures.length === 0) return null;
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       {groupesAvecFigures.map((g) => (
         <div key={g.uid} className="rounded-lg border border-[var(--border)] p-3">
           <div className="mb-2 flex items-center gap-2">
             <span
-              className="rounded px-1.5 py-0.5 text-xs font-bold text-white"
+              className="shrink-0 rounded px-1.5 py-0.5 text-xs font-bold text-white"
               style={{ background: groupColor(g.abrege) }}
             >
               {g.abrege}
             </span>
-            <span className="truncate text-sm text-[var(--muted)]">{g.libelle}</span>
+            <span className="min-w-0 truncate text-sm text-[var(--muted)]">{g.libelle}</span>
           </div>
           <div className="flex flex-wrap gap-1.5">
             {figuresParGroupe[g.uid].map((d) => (

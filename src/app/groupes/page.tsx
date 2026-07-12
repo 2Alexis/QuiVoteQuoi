@@ -49,7 +49,7 @@ export default async function GroupesPage({
         <LegSwitcher current={leg} base="/groupes" legislatures={legislatures()} />
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {gs.map((g) => (
           <Link
             key={g.uid}
