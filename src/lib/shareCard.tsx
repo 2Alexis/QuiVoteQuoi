@@ -108,37 +108,56 @@ export function shareCardElement(input: ShareCardInput, format: ShareFormat) {
     </div>
   );
 
-  // Segment vertical d'une colonne empilée (part dans l'effectif du groupe).
-  const segV = (n: number, color: string, membres: number) =>
-    n > 0 ? <div style={{ display: "flex", width: "100%", height: `${(n / membres) * 100}%`, background: color }} /> : null;
+  // Segment vertical d'une colonne empilée (part dans l'effectif). `label` = chiffre
+  // blanc centré (nb de députés de ce vote), porté par le plus grand segment.
+  const segV = (n: number, color: string, membres: number, label?: string) =>
+    n > 0 ? (
+      <div
+        style={{
+          display: "flex", width: "100%", height: `${(n / membres) * 100}%`, background: color,
+          alignItems: "center", justifyContent: "center",
+        }}
+      >
+        {label ? (
+          <div style={{ display: "flex", color: "#ffffff", fontWeight: 800, fontSize: S.gCount }}>{label}</div>
+        ) : null}
+      </div>
+    ) : null;
 
-  // Une colonne par groupe : effectif au-dessus, barre empilée (pour en bas, absents
-  // en haut), abrégé dessous. Hauteur proportionnelle à l'effectif (cf. barHeight).
-  const groupColumn = (g: (typeof groupes)[number]) => (
-    <div key={g.abrege ?? "NI"} style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1 }}>
-      <div style={{ display: "flex", fontSize: S.gCount, color: C.muted, marginBottom: 8 }}>{nf(g.membres)}</div>
-      <div
-        style={{
-          display: "flex", flexDirection: "column-reverse", width: S.gBarW, height: barHeight(g.membres),
-          borderRadius: 7, overflow: "hidden", background: C.barTrack,
-        }}
-      >
-        {segV(g.pour, C.pour, g.membres)}
-        {segV(g.contre, C.contre, g.membres)}
-        {segV(g.abstention, C.abstention, g.membres)}
-        {segV(g.nonvotant, C.nonvotant, g.membres)}
-        {segV(g.absent, C.absent, g.membres)}
+  // Une colonne par groupe : effectif total au-dessus, barre empilée (pour en bas,
+  // absents en haut), abrégé dessous. Le plus grand segment pour/contre porte, en
+  // blanc, le nombre de députés ayant voté ainsi. Hauteur ∝ effectif (cf. barHeight).
+  const groupColumn = (g: (typeof groupes)[number]) => {
+    const domPour = g.pour >= g.contre;
+    const domN = domPour ? g.pour : g.contre;
+    // Chiffre affiché seulement si le segment dominant est assez haut pour être lisible.
+    const showNum = (domN / maxTot) * S.gBarH >= S.gCount + 12;
+    return (
+      <div key={g.abrege ?? "NI"} style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1 }}>
+        <div style={{ display: "flex", fontSize: S.gCount, color: C.muted, marginBottom: 8 }}>{nf(g.membres)}</div>
+        <div
+          style={{
+            display: "flex", flexDirection: "column-reverse", width: S.gBarW, height: barHeight(g.membres),
+            borderRadius: 7, overflow: "hidden", background: C.barTrack,
+          }}
+        >
+          {segV(g.pour, C.pour, g.membres, showNum && domPour ? nf(g.pour) : undefined)}
+          {segV(g.contre, C.contre, g.membres, showNum && !domPour ? nf(g.contre) : undefined)}
+          {segV(g.abstention, C.abstention, g.membres)}
+          {segV(g.nonvotant, C.nonvotant, g.membres)}
+          {segV(g.absent, C.absent, g.membres)}
+        </div>
+        <div
+          style={{
+            display: "flex", marginTop: 12, fontSize: S.gLabel, fontWeight: 700,
+            color: groupColor(g.abrege), maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap",
+          }}
+        >
+          {g.abrege ?? "NI"}
+        </div>
       </div>
-      <div
-        style={{
-          display: "flex", marginTop: 12, fontSize: S.gLabel, fontWeight: 700,
-          color: groupColor(g.abrege), maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap",
-        }}
-      >
-        {g.abrege ?? "NI"}
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div style={{ width: S.w, height: S.h, display: "flex", flexDirection: "column", background: C.bg, color: C.fg }}>
