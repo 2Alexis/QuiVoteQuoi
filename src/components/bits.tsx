@@ -180,7 +180,17 @@ export function VoteBar({
 // Jauge circulaire d'un indicateur en pourcentage (participation, cohésion,
 // alignement…) : plus lisible et accrocheuse qu'une simple barre, partagée entre
 // les fiches député et groupe. Quatre cartes tiennent en 2×2 sans « trou ».
-export function MetricRing({ label, value, hint }: { label: string; value: number; hint: string }) {
+export function MetricRing({
+  label,
+  value,
+  hint,
+  color = "var(--accent)",
+}: {
+  label: string;
+  value: number;
+  hint: string;
+  color?: string;
+}) {
   const v = Math.max(0, Math.min(1, value));
   const R = 26;
   const C = 2 * Math.PI * R;
@@ -195,7 +205,7 @@ export function MetricRing({ label, value, hint }: { label: string; value: numbe
             cy="32"
             r={R}
             fill="none"
-            stroke="var(--accent)"
+            stroke={color}
             strokeWidth="7"
             strokeLinecap="round"
             strokeDasharray={C}

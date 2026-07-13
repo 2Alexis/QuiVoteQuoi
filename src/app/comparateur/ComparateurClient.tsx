@@ -99,35 +99,50 @@ function OrientationBars({ rows, order }: { rows: OrientCatC[]; order?: string[]
   if (cats.length === 0)
     return <p className="text-xs text-[var(--muted)]">Pas assez de votes thématiques marqués.</p>;
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {cats.map((cat) => {
         const r = byCat.get(cat);
         const dp = droitePart(r);
         const [pg, pd] = poles(cat);
+        if (dp == null) {
+          return (
+            <div key={cat}>
+              <div className="mb-1 text-xs font-medium">{cat}</div>
+              <div className="h-1.5 w-full rounded-full" style={{ background: POLE_MID }} />
+              <div className="mt-0.5 text-[10px] text-[var(--muted)]">Pas de vote marqué</div>
+            </div>
+          );
+        }
+        const { pole, share } = lean(dp, pg, pd);
+        const partage = share < 0.6;
+        const poleColor = partage ? "#8A96A3" : dp >= 0.5 ? POLE_D : POLE_G;
         return (
           <div key={cat}>
-            <div className="mb-0.5 text-xs font-medium">{cat}</div>
-            {dp == null ? (
-              <>
-                <div className="h-2 w-full rounded" style={{ background: POLE_MID }} />
-                <div className="mt-0.5 text-[10px] text-[var(--muted)]">Pas de vote marqué</div>
-              </>
-            ) : (
-              <>
-                <div className="flex h-2 w-full overflow-hidden rounded">
-                  <div style={{ width: `${(1 - dp) * 100}%`, background: POLE_G }} />
-                  <div style={{ width: `${dp * 100}%`, background: POLE_D }} />
-                </div>
-                <div className="mt-0.5 flex justify-between text-[10px] text-[var(--muted)]">
-                  <span>
-                    {pg} · {Math.round((1 - dp) * 100)}%
-                  </span>
-                  <span>
-                    {Math.round(dp * 100)}% · {pd}
-                  </span>
-                </div>
-              </>
-            )}
+            <div className="mb-1 text-xs font-medium">{cat}</div>
+            <div className="relative h-3.5">
+              <div
+                className="absolute top-1/2 h-1.5 w-full -translate-y-1/2 rounded-full"
+                style={{ background: `linear-gradient(to right, ${POLE_G}, ${POLE_MID}, ${POLE_D})` }}
+              />
+              <Dot
+                left={dp}
+                color={poleColor}
+                title={`${pct(share)} vers ${pole}`}
+              />
+            </div>
+            <div className="mt-1 flex justify-between text-[10px] text-[var(--muted)]">
+              <span>← {pg}</span>
+              <span>{pd} →</span>
+            </div>
+            <p className="mt-0.5 text-[11px] text-[var(--muted)]">
+              {partage ? (
+                <>Partagé entre les deux pôles.</>
+              ) : (
+                <>
+                  Penche vers <b style={{ color: poleColor }}>«&nbsp;{pole}&nbsp;»</b> ({pct(share)}).
+                </>
+              )}
+            </p>
           </div>
         );
       })}
@@ -766,13 +781,37 @@ function DeputeVs({
       <div className="border-t border-[var(--border)] pt-4">
         <h2 className="mb-1 text-lg font-semibold">Face à face</h2>
         <p className="mb-4 text-xs text-[var(--muted)]">
-          Chaque député a sa couleur ; les valeurs se font face autour d&apos;un axe central.
+          Les indicateurs de chaque député, dans sa couleur.
         </p>
-        <div className="divide-y divide-[var(--border)]">
-          <CompareBar label="Participation" a={a.participation} b={b.participation} colorA={IDENT_A} colorB={IDENT_B} kind="pct" />
-          <CompareBar label="Loyauté au groupe" a={a.loyaute} b={b.loyaute} colorA={IDENT_A} colorB={IDENT_B} kind="pct" />
-          <CompareBar label="Alignement présidentiel" a={a.align} b={b.align} colorA={IDENT_A} colorB={IDENT_B} kind="pct" />
-          <CompareBar label="… sur les votes clivants" a={a.alignClivant} b={b.alignClivant} colorA={IDENT_A} colorB={IDENT_B} kind="pct" />
+        <div className="grid grid-cols-2 gap-3">
+          {cols.map(([dep, , , color]) => (
+            <div key={dep.uid} className="space-y-2">
+              <MetricRing
+                label="Participation"
+                value={dep.participation}
+                hint={`${dep.n_exprime} votes exprimés sur ${dep.n_concerne} scrutins`}
+                color={color}
+              />
+              <MetricRing
+                label="Loyauté au groupe"
+                value={dep.loyaute}
+                hint={`Suit la position majoritaire de son groupe (${dep.n_loyal}/${dep.n_loyal_denom})`}
+                color={color}
+              />
+              <MetricRing
+                label="Alignement présidentiel"
+                value={dep.align}
+                hint={`Vote comme le bloc présidentiel (${dep.n_align}/${dep.n_align_denom})`}
+                color={color}
+              />
+              <MetricRing
+                label="Alignement (votes clivants)"
+                value={dep.alignClivant}
+                hint={`Hors votes quasi-unanimes (${dep.n_align_cliv}/${dep.n_align_cliv_denom})`}
+                color={color}
+              />
+            </div>
+          ))}
         </div>
         <OrientationVs
           rowsA={orientDeputes[a.uid] ?? []}
