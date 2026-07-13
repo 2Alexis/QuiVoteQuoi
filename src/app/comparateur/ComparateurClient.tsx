@@ -923,14 +923,18 @@ function Deputes({ legs, data }: { legs: string[]; data: Record<string, LegData>
   // que de laisser l'utilisateur face à deux noms pris au hasard de l'alphabet.
   const presets = useMemo(() => {
     const figs = figuresDe(deputes);
-    const list: { id: string; label: string; pair: [string, string] }[] = [];
-    if (figs.length >= 2) {
-      list.push({
-        id: "gd",
-        label: "Gauche ⇄ droite",
-        pair: [figs[0].uid, figs[figs.length - 1].uid],
-      });
+    const list: { id: string; label: string; pairs: [string, string][] }[] = [];
+
+    // Gauche ⇄ droite : la figure la plus à gauche face à la plus à droite, puis
+    // on resserre vers le centre (2e plus à gauche vs 2e plus à droite, etc.).
+    const gd: [string, string][] = [];
+    for (let i = 0; i < Math.floor(figs.length / 2); i++) {
+      const L = figs[i];
+      const R = figs[figs.length - 1 - i];
+      if (L.uid !== R.uid && L.abrege !== R.abrege) gd.push([L.uid, R.uid]);
     }
+    if (gd.length) list.push({ id: "gd", label: "Gauche ⇄ droite", pairs: gd.slice(0, 8) });
+
     // Une figure (ou, à défaut, le membre le plus actif) d'un groupe donné.
     const pick = (abrege: string): string | null => {
       const f = figs.find((d) => d.abrege === abrege);
@@ -940,14 +944,20 @@ function Deputes({ legs, data }: { legs: string[]; data: Record<string, LegData>
         .sort((x, y) => y.n_exprime - x.n_exprime);
       return membres[0]?.uid ?? null;
     };
-    const [g1, g2] = positions; // positionsGroupes() trie par effectif décroissant
-    if (g1?.abrege && g2?.abrege) {
-      const p1 = pick(g1.abrege);
-      const p2 = pick(g2.abrege);
-      if (p1 && p2 && p1 !== p2) {
-        list.push({ id: "pl", label: "Deux poids lourds", pair: [p1, p2] });
+    // Deux poids lourds : un représentant par groupe (positionsGroupes() trie par
+    // effectif décroissant), appariés en commençant par les groupes voisins en
+    // taille — les plus gros d'abord — puis en élargissant l'écart.
+    const reps = positions
+      .map((g) => (g.abrege ? pick(g.abrege) : null))
+      .filter((x): x is string => Boolean(x));
+    const pl: [string, string][] = [];
+    for (let gap = 1; gap < reps.length; gap++) {
+      for (let i = 0; i + gap < reps.length; i++) {
+        if (reps[i] !== reps[i + gap]) pl.push([reps[i], reps[i + gap]]);
       }
     }
+    if (pl.length) list.push({ id: "pl", label: "Deux poids lourds", pairs: pl.slice(0, 12) });
+
     return list;
   }, [deputes, positions]);
 
@@ -964,15 +974,27 @@ function Deputes({ legs, data }: { legs: string[]; data: Record<string, LegData>
     setB(pool[j].uid);
   };
 
+  // Index courant de défilement de chaque préréglage : un clic arme la paire
+  // courante puis avance d'un cran (en boucle), comme un « au hasard » guidé.
+  const [presetIdx, setPresetIdx] = useState<Record<string, number>>({});
+  const cyclePreset = (p: { id: string; pairs: [string, string][] }) => {
+    const i = presetIdx[p.id] ?? 0;
+    const pair = p.pairs[i % p.pairs.length];
+    if (!pair) return;
+    setA(pair[0]);
+    setB(pair[1]);
+    setPresetIdx((m) => ({ ...m, [p.id]: (i + 1) % p.pairs.length }));
+  };
+  const armedPreset = (p: { pairs: [string, string][] }) =>
+    p.pairs.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
+
   const onLeg = (l: string) => {
     setLeg(l);
     const [na, nb] = defautParlant(data[l].deputes);
     setA(na);
     setB(nb);
+    setPresetIdx({});
   };
-
-  const armed = (pair: [string, string]) =>
-    (pair[0] === a && pair[1] === b) || (pair[0] === b && pair[1] === a);
 
   const dA = deputes.find((x) => x.uid === a);
   const dB = deputes.find((x) => x.uid === b);
@@ -988,18 +1010,17 @@ function Deputes({ legs, data }: { legs: string[]; data: Record<string, LegData>
         {presets.map((p) => (
           <button
             key={p.id}
-            onClick={() => {
-              setA(p.pair[0]);
-              setB(p.pair[1]);
-            }}
-            aria-pressed={armed(p.pair)}
+            onClick={() => cyclePreset(p)}
+            aria-pressed={armedPreset(p)}
+            title={p.pairs.length > 1 ? "Cliquez pour faire défiler d'autres duels" : undefined}
             className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-              armed(p.pair)
+              armedPreset(p)
                 ? "border-[var(--accent)] bg-[var(--accent)] text-white"
                 : "border-[var(--border)] text-[var(--muted)] hover:border-[var(--accent)]"
             }`}
           >
             {p.label}
+            {p.pairs.length > 1 && <span className="ml-1 opacity-60">↻</span>}
           </button>
         ))}
         <button
