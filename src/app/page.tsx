@@ -76,6 +76,9 @@ function IconGroupes({ className }: { className?: string }) {
 export default function Home() {
   const s = stats();
   const gs = compositionActuelle();
+  // Les non-inscrits (« NI ») ne sont pas un groupe : on les exclut du décompte et
+  // de la liste des groupes, mais on les garde dans l'hémicycle (bloc « Divers / NI »).
+  const groupesReels = gs.filter((g) => g.abrege !== "NI");
   const derniers = scrutins({ perPage: 6 }).rows;
   const totalSieges = gs.reduce((a, g) => a + (g.n ?? 0), 0);
   const blocs = BLOCS.map((b) => ({
@@ -129,7 +132,7 @@ export default function Home() {
             { label: "Députés", value: s.deputes, href: "/deputes", Icon: IconDeputes },
             { label: "Scrutins", value: s.scrutins, href: "/scrutins", Icon: IconScrutins },
             { label: "Votes enregistrés", value: s.votes, href: "/scrutins", Icon: IconVotes },
-            { label: "Groupes", value: s.groupes, href: "/groupes", Icon: IconGroupes },
+            { label: "Groupes", value: groupesReels.length, href: "/groupes", Icon: IconGroupes },
           ].map(({ label, value, href, Icon }) => (
             <Link key={label} href={href} className="card p-4 transition-shadow hover:shadow-sm">
               <span className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--accent-soft)] text-[var(--accent-strong)]">
@@ -173,7 +176,7 @@ export default function Home() {
               <span className="text-xs text-[var(--muted)]">{totalSieges} sièges</span>
             </div>
             <ul className="space-y-1.5">
-              {gs.map((g) => (
+              {groupesReels.map((g) => (
                 <li key={g.uid}>
                   <Link
                     href={`/groupes/${g.uid}`}

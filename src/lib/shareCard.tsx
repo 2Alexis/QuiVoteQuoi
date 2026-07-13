@@ -41,7 +41,7 @@ const C = {
   pour: "#2E9E5B",
   contre: "#C8102E",
   abstention: "#E7A100",
-  nonvotant: "#94A3B8",
+  nonvotant: "#20242B",
   absent: "#D3DAE2",
   barTrack: "#eef1f4",
   hair: "#e7ebf0",
@@ -85,15 +85,16 @@ export function shareCardElement(input: ShareCardInput, format: ShareFormat) {
   const catColor = categorieColor(input.categorie);
   const nf = (n: number) => n.toLocaleString("fr-FR");
 
-  // Une colonne par groupe, du plus gros au plus petit. La barre monte jusqu'à
-  // l'effectif complet du groupe ; les membres non décomptés au vote = « absents ».
+  // Une colonne par groupe (hors non-inscrits « NI », qui n'est pas un groupe),
+  // du plus gros au plus petit. La barre monte jusqu'à l'effectif complet du
+  // groupe ; les membres non décomptés au vote = « absents ».
   const groupes = [...input.groupes]
     .map((g) => {
       const votants = g.pour + g.contre + g.abstention + g.nonvotant;
       const membres = Math.max(g.membres ?? votants, votants);
       return { ...g, votants, membres, absent: membres - votants };
     })
-    .filter((g) => g.membres > 0)
+    .filter((g) => g.membres > 0 && g.abrege != null && g.abrege !== "NI")
     .sort((a, b) => b.membres - a.membres)
     .slice(0, S.maxGroups);
   // Hauteur des colonnes proportionnelle à l'effectif du groupe (le plus gros
