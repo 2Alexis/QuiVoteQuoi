@@ -439,7 +439,7 @@ db.exec(`
     SUM(CASE WHEN ${OR_DROITE("sg.majorite")} THEN 1 ELSE 0 END) droite,
     SUM(CASE WHEN ${OR_GAUCHE("sg.majorite")} THEN 1 ELSE 0 END) gauche
   FROM scrutin_groupe sg JOIN scrutins s ON s.uid = sg.scrutin_uid
-  WHERE s.categorie IS NOT NULL AND sg.majorite IN ('pour','contre')
+  WHERE s.categorie IS NOT NULL AND s.categorie != 'Autre' AND sg.majorite IN ('pour','contre')
     AND s.orientation_score IS NOT NULL
   GROUP BY sg.groupe_uid, s.legislature, s.categorie;
   DELETE FROM groupe_orient WHERE gauche + droite = 0;
@@ -451,7 +451,7 @@ db.exec(`
     SUM(CASE WHEN ${OR_DROITE("v.position")} THEN 1 ELSE 0 END) droite,
     SUM(CASE WHEN ${OR_GAUCHE("v.position")} THEN 1 ELSE 0 END) gauche
   FROM votes v JOIN scrutins s ON s.uid = v.scrutin_uid
-  WHERE s.categorie IS NOT NULL AND v.position IN ('pour','contre')
+  WHERE s.categorie IS NOT NULL AND s.categorie != 'Autre' AND v.position IN ('pour','contre')
     AND s.orientation_score IS NOT NULL
   GROUP BY v.acteur_uid, s.legislature, s.categorie;
   DELETE FROM depute_orient WHERE gauche + droite = 0;

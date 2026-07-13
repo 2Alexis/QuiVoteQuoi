@@ -234,7 +234,7 @@ function OrientationVs({
   if (cats.length === 0) return null;
   return (
     <div className="mt-6 border-t border-[var(--border)] pt-4">
-      <h3 className="mb-1 text-sm font-semibold">Orientation par thème</h3>
+      <h3 className="mb-1 text-sm font-semibold">Orientation des votes par thème</h3>
       <p className="mb-5 text-xs text-[var(--muted)]">
         Sens des votes exprimés (<b>pour</b> et <b>contre</b>) de chaque {sujet} sur l&apos;axe du
         thème. Chaque {sujet} penche vers l&apos;un des deux pôles ; le pourcentage indique
@@ -727,7 +727,7 @@ function ColonneDepute({
             </div>
             <div className="border-t border-[var(--border)] pt-3">
               <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
-                Orientation par thème
+                Orientation des votes par thème
               </div>
               <OrientationBars rows={orientDeputes[d.uid] ?? []} order={orientOrder} />
             </div>

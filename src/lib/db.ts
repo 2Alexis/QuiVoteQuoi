@@ -660,7 +660,7 @@ export function votesGroupeParCategorie(groupeUid: string): CategorieVotes[] {
         SUM(sg.pour + sg.contre + sg.abstention) total,
         ${hasOrientation() ? ORIENT_ENDORSE("sg.majorite") : "0 orient_gauche, 0 orient_droite"}
        FROM scrutin_groupe sg JOIN scrutins s ON s.uid = sg.scrutin_uid
-       WHERE sg.groupe_uid = ? AND s.categorie IS NOT NULL
+       WHERE sg.groupe_uid = ? AND s.categorie IS NOT NULL AND s.categorie != 'Autre'
        GROUP BY s.categorie
        HAVING total > 0
        ORDER BY total DESC`
@@ -678,7 +678,7 @@ export function votesDeputeParCategorie(uid: string): (CategorieVotes & { legisl
         SUM(v.position IN ('pour','contre','abstention')) total,
         ${hasOrientation() ? ORIENT_ENDORSE("v.position") : "0 orient_gauche, 0 orient_droite"}
        FROM votes v JOIN scrutins s ON s.uid = v.scrutin_uid
-       WHERE v.acteur_uid = ? AND s.categorie IS NOT NULL
+       WHERE v.acteur_uid = ? AND s.categorie IS NOT NULL AND s.categorie != 'Autre'
        GROUP BY s.legislature, s.categorie
        HAVING total > 0
        ORDER BY s.legislature DESC, total DESC`
@@ -1062,7 +1062,7 @@ export function orientationGroupesParCategorie(leg = DEFAULT_LEG): Record<string
     .prepare(
       `SELECT o.abrege abrege, go.categorie, go.gauche, go.droite
        FROM groupe_orient go JOIN organes o ON o.uid = go.uid
-       WHERE go.legislature = ? AND o.abrege IS NOT NULL
+       WHERE go.legislature = ? AND o.abrege IS NOT NULL AND go.categorie != 'Autre'
        ORDER BY (go.gauche + go.droite) DESC`
     )
     .all(leg) as { abrege: string; categorie: string; gauche: number; droite: number }[];
@@ -1080,7 +1080,7 @@ export function orientationDeputesParCategorie(leg = DEFAULT_LEG): Record<string
     .prepare(
       `SELECT uid, categorie, gauche, droite
        FROM depute_orient
-       WHERE legislature = ?
+       WHERE legislature = ? AND categorie != 'Autre'
        ORDER BY (gauche + droite) DESC`
     )
     .all(leg) as { uid: string; categorie: string; gauche: number; droite: number }[];

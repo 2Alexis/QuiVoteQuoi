@@ -190,7 +190,7 @@ export function compareCardElement(input: CompareCardInput) {
         </div>
 
         {/* Intitulé de section */}
-        <div style={{ display: "flex", fontSize: 29, fontWeight: 800, marginTop: 16 }}>Orientation par thème</div>
+        <div style={{ display: "flex", fontSize: 29, fontWeight: 800, marginTop: 16 }}>Orientation des votes par thème</div>
 
         {/* Axes par thème : point de chaque entité + son % de penchant, pôles aux extrémités. */}
         <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "flex-start", marginTop: 14, gap: 10 }}>
