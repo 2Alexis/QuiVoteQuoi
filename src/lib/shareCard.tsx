@@ -13,6 +13,9 @@ export interface GroupVote {
   contre: number;
   abstention: number;
   nonvotant: number;
+  // Effectif du groupe à la date du scrutin : la différence avec les votes
+  // décomptés donne les absents. Optionnel (repli sur le nombre de votants).
+  membres?: number;
 }
 
 export interface ShareCardInput {
@@ -39,6 +42,7 @@ const C = {
   contre: "#C8102E",
   abstention: "#E7A100",
   nonvotant: "#94A3B8",
+  absent: "#D3DAE2",
   barTrack: "#eef1f4",
   hair: "#e7ebf0",
 };
@@ -81,16 +85,21 @@ export function shareCardElement(input: ShareCardInput, format: ShareFormat) {
   const catColor = categorieColor(input.categorie);
   const nf = (n: number) => n.toLocaleString("fr-FR");
 
-  // Ne garde que les groupes ayant réellement voté, du plus gros au plus petit.
+  // Une colonne par groupe, du plus gros au plus petit. La barre monte jusqu'à
+  // l'effectif complet du groupe ; les membres non décomptés au vote = « absents ».
   const groupes = [...input.groupes]
-    .map((g) => ({ ...g, tot: g.pour + g.contre + g.abstention + g.nonvotant }))
-    .filter((g) => g.tot > 0)
-    .sort((a, b) => b.tot - a.tot)
+    .map((g) => {
+      const votants = g.pour + g.contre + g.abstention + g.nonvotant;
+      const membres = Math.max(g.membres ?? votants, votants);
+      return { ...g, votants, membres, absent: membres - votants };
+    })
+    .filter((g) => g.membres > 0)
+    .sort((a, b) => b.membres - a.membres)
     .slice(0, S.maxGroups);
-  // Hauteur des colonnes proportionnelle à l'effectif : le plus gros groupe atteint
-  // la hauteur max, les autres au prorata (avec un plancher pour rester visibles).
-  const maxTot = Math.max(1, ...groupes.map((g) => g.tot));
-  const barHeight = (tot: number) => Math.max(14, Math.round((tot / maxTot) * S.gBarH));
+  // Hauteur des colonnes proportionnelle à l'effectif du groupe (le plus gros
+  // atteint la hauteur max, les autres au prorata, plancher pour rester visibles).
+  const maxTot = Math.max(1, ...groupes.map((g) => g.membres));
+  const barHeight = (n: number) => Math.max(14, Math.round((n / maxTot) * S.gBarH));
 
   const legendChip = (label: string, color: string) => (
     <div style={{ display: "flex", alignItems: "center", marginRight: 26 }}>
@@ -99,25 +108,26 @@ export function shareCardElement(input: ShareCardInput, format: ShareFormat) {
     </div>
   );
 
-  // Segment vertical d'une colonne empilée (part du vote dans la hauteur du groupe).
-  const segV = (n: number, color: string, tot: number) =>
-    n > 0 ? <div style={{ display: "flex", width: "100%", height: `${(n / tot) * 100}%`, background: color }} /> : null;
+  // Segment vertical d'une colonne empilée (part dans l'effectif du groupe).
+  const segV = (n: number, color: string, membres: number) =>
+    n > 0 ? <div style={{ display: "flex", width: "100%", height: `${(n / membres) * 100}%`, background: color }} /> : null;
 
-  // Une colonne par groupe : effectif au-dessus, barre empilée (pour en bas), abrégé
-  // dessous. Hauteur proportionnelle à l'effectif du groupe (cf. barHeight).
+  // Une colonne par groupe : effectif au-dessus, barre empilée (pour en bas, absents
+  // en haut), abrégé dessous. Hauteur proportionnelle à l'effectif (cf. barHeight).
   const groupColumn = (g: (typeof groupes)[number]) => (
     <div key={g.abrege ?? "NI"} style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1 }}>
-      <div style={{ display: "flex", fontSize: S.gCount, color: C.muted, marginBottom: 8 }}>{nf(g.tot)}</div>
+      <div style={{ display: "flex", fontSize: S.gCount, color: C.muted, marginBottom: 8 }}>{nf(g.membres)}</div>
       <div
         style={{
-          display: "flex", flexDirection: "column-reverse", width: S.gBarW, height: barHeight(g.tot),
+          display: "flex", flexDirection: "column-reverse", width: S.gBarW, height: barHeight(g.membres),
           borderRadius: 7, overflow: "hidden", background: C.barTrack,
         }}
       >
-        {segV(g.pour, C.pour, g.tot)}
-        {segV(g.contre, C.contre, g.tot)}
-        {segV(g.abstention, C.abstention, g.tot)}
-        {segV(g.nonvotant, C.nonvotant, g.tot)}
+        {segV(g.pour, C.pour, g.membres)}
+        {segV(g.contre, C.contre, g.membres)}
+        {segV(g.abstention, C.abstention, g.membres)}
+        {segV(g.nonvotant, C.nonvotant, g.membres)}
+        {segV(g.absent, C.absent, g.membres)}
       </div>
       <div
         style={{
@@ -179,6 +189,7 @@ export function shareCardElement(input: ShareCardInput, format: ShareFormat) {
             {legendChip("Contre", C.contre)}
             {legendChip("Abstention", C.abstention)}
             {legendChip("Non-votant", C.nonvotant)}
+            {legendChip("Absent", C.absent)}
           </div>
           <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 8 }}>
             {groupes.map(groupColumn)}

@@ -865,6 +865,26 @@ export function ventilationScrutin(uid: string): VentilationGroupe[] {
   return rows;
 }
 
+// Effectif de chaque groupe (clé = uid d'organe) à une date donnée : mandats en
+// cours ce jour-là. Sert à afficher les « absents » d'un scrutin (membres du
+// groupe non décomptés dans le vote) sur le visuel de partage. Renvoie {} si la
+// base n'a pas les dates de mandat (repli : pas d'absents affichés).
+export function effectifsGroupesADate(leg: string, date: string): Record<string, number> {
+  if (!hasMandatDates()) return {};
+  const rows = db()
+    .prepare(
+      `SELECT m.groupe_uid uid, COUNT(*) n FROM mandats m
+       WHERE m.legislature = ? AND m.groupe_uid IS NOT NULL
+         AND (m.date_debut IS NULL OR m.date_debut <= ?)
+         AND (m.date_fin IS NULL OR m.date_fin >= ?)
+       GROUP BY m.groupe_uid`
+    )
+    .all(leg, date, date) as { uid: string; n: number }[];
+  const out: Record<string, number> = {};
+  for (const r of rows) out[r.uid] = r.n;
+  return out;
+}
+
 export function votesNominatifsScrutin(uid: string) {
   return db()
     .prepare(

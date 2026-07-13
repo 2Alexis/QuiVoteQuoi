@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { scrutin, ventilationScrutin } from "@/lib/db";
+import { scrutin, ventilationScrutin, effectifsGroupesADate } from "@/lib/db";
 import { shareCardElement } from "@/lib/shareCard";
 
 // Image d'aperçu (Open Graph / Twitter) générée pour chaque scrutin : Next
@@ -40,6 +40,9 @@ export default async function Image({ params }: { params: Promise<{ uid: string 
     );
   }
 
+  const eff = effectifsGroupesADate(sc.legislature, sc.date);
+  const groupes = ventilationScrutin(uid).map((v) => ({ ...v, membres: eff[v.groupe_uid ?? ""] }));
+
   return new ImageResponse(
     shareCardElement(
       {
@@ -52,7 +55,7 @@ export default async function Image({ params }: { params: Promise<{ uid: string 
         contre: sc.contre ?? 0,
         abstention: sc.abstentions ?? 0,
         nonvotant: sc.non_votants ?? 0,
-        groupes: ventilationScrutin(uid),
+        groupes,
       },
       "landscape",
     ),

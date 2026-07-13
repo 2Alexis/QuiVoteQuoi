@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { scrutin, ventilationScrutin } from "@/lib/db";
+import { scrutin, ventilationScrutin, effectifsGroupesADate } from "@/lib/db";
 import { shareCardElement } from "@/lib/shareCard";
 
 // Visuel carré 1080×1080 téléchargeable (format post Instagram), généré à la
@@ -11,6 +11,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ uid: st
   const { uid } = await params;
   const sc = scrutin(uid);
   if (!sc) return new Response("Scrutin introuvable", { status: 404 });
+
+  const eff = effectifsGroupesADate(sc.legislature, sc.date);
+  const groupes = ventilationScrutin(uid).map((v) => ({ ...v, membres: eff[v.groupe_uid ?? ""] }));
 
   return new ImageResponse(
     shareCardElement(
@@ -24,7 +27,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ uid: st
         contre: sc.contre ?? 0,
         abstention: sc.abstentions ?? 0,
         nonvotant: sc.non_votants ?? 0,
-        groupes: ventilationScrutin(uid),
+        groupes,
       },
       "square",
     ),
