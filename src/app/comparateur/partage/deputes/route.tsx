@@ -32,8 +32,12 @@ export async function GET(req: Request) {
   const dB = deputes.find((d) => d.uid === bUid);
   if (!dA || !dB) return new Response("Députés introuvables", { status: 404 });
 
+  // Carrousel : les thèmes sont répartis sur 2 images (première moitié / reste).
+  const part = url.searchParams.get("part") === "2" ? 2 : 1;
   const orient = orientationDeputesParCategorie(leg);
-  const themes = buildThemes(orient[aUid] ?? [], orient[bUid] ?? [], ORIENTATION_POLES);
+  const all = buildThemes(orient[aUid] ?? [], orient[bUid] ?? [], ORIENTATION_POLES);
+  const half = Math.ceil(all.length / 2);
+  const themes = part === 1 ? all.slice(0, half) : all.slice(half);
 
   return new ImageResponse(
     compareCardElement({
@@ -42,6 +46,7 @@ export async function GET(req: Request) {
       a: { label: `${dA.prenom} ${dA.nom}`, sub: dA.abrege ?? "Non inscrit", color: IDENT_A },
       b: { label: `${dB.prenom} ${dB.nom}`, sub: dB.abrege ?? "Non inscrit", color: IDENT_B },
       themes,
+      part: { index: part, total: 2 },
     }),
     {
       width: 1080,

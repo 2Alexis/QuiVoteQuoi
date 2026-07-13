@@ -296,32 +296,36 @@ function PartageVisuel({ href }: { href: string }) {
   const telecharger = async () => {
     if (loading) return;
     setLoading(true);
-    // Paramètre anti-cache : le rendu est mis en cache par le CDN, et après un
-    // déploiement (nouveau design, correctif…) l'ancienne image pourrait encore
-    // être servie. On force donc une génération fraîche à chaque téléchargement.
-    const frais = `${href}${href.includes("?") ? "&" : "?"}cb=${Date.now()}`;
+    const sep = href.includes("?") ? "&" : "?";
     try {
-      const res = await fetch(frais);
-      if (!res.ok) throw new Error("génération échouée");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "quivotequoi-comparateur.png";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      // Deux images (carrousel) : la 1re moitié des thèmes, puis le reste. Le
+      // paramètre `cb` (anti-cache) garantit une image fraîche à chaque fois.
+      for (const part of [1, 2]) {
+        const res = await fetch(`${href}${sep}part=${part}&cb=${Date.now()}`);
+        if (!res.ok) continue;
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `quivotequoi-comparateur-${part}.png`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        // Laisser le 1er téléchargement démarrer avant de lancer le 2e (sinon
+        // certains navigateurs ignorent le second).
+        if (part === 1) await new Promise((r) => setTimeout(r, 500));
+      }
     } catch {
-      // Repli si le téléchargement direct échoue : ouvre l'image dans un onglet.
-      window.open(frais, "_blank", "noopener,noreferrer");
+      // Repli si le téléchargement direct échoue : ouvre la 1re image dans un onglet.
+      window.open(`${href}${sep}part=1`, "_blank", "noopener,noreferrer");
     } finally {
       setLoading(false);
     }
   };
   return (
     <div className="flex flex-wrap items-center gap-2 border-t border-[var(--border)] pt-4">
-      <span className="text-xs text-[var(--muted)]">Partager cette comparaison :</span>
+      <span className="text-xs text-[var(--muted)]">Partager cette comparaison (2 images) :</span>
       <button
         type="button"
         onClick={telecharger}

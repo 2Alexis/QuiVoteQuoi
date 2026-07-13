@@ -22,6 +22,9 @@ export interface CompareCardInput {
   a: { label: string; sub: string | null; color: string };
   b: { label: string; sub: string | null; color: string };
   themes: CompareTheme[];
+  // Si le jeu de thèmes est réparti sur plusieurs images (carrousel), indique
+  // laquelle (« 1/2 ») ; les `themes` passés sont déjà le sous-ensemble à afficher.
+  part?: { index: number; total: number };
 }
 
 const C = {
@@ -190,10 +193,17 @@ export function compareCardElement(input: CompareCardInput) {
         </div>
 
         {/* Intitulé de section */}
-        <div style={{ display: "flex", fontSize: 29, fontWeight: 800, marginTop: 16 }}>Orientation des votes par thème</div>
+        <div style={{ display: "flex", alignItems: "baseline", marginTop: 16 }}>
+          <div style={{ display: "flex", fontSize: 29, fontWeight: 800 }}>Orientation des votes par thème</div>
+          {input.part ? (
+            <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: C.faint, marginLeft: 12 }}>
+              {`${input.part.index}/${input.part.total}`}
+            </div>
+          ) : null}
+        </div>
 
         {/* Axes par thème : point de chaque entité + son % de penchant, pôles aux extrémités. */}
-        <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "flex-start", marginTop: 14, gap: 10 }}>
+        <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-between", marginTop: 22, paddingBottom: 6, gap: 16 }}>
           {themes.map(themeRow)}
         </div>
 

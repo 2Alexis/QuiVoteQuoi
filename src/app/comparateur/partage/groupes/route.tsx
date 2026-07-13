@@ -27,8 +27,12 @@ export async function GET(req: Request) {
   const gB = positions.find((g) => g.abrege === bAbrege);
   if (!gA || !gB) return new Response("Groupes introuvables", { status: 404 });
 
+  // Carrousel : les thèmes sont répartis sur 2 images (première moitié / reste).
+  const part = url.searchParams.get("part") === "2" ? 2 : 1;
   const orient = orientationGroupesParCategorie(leg);
-  const themes = buildThemes(orient[aAbrege] ?? [], orient[bAbrege] ?? [], ORIENTATION_POLES);
+  const all = buildThemes(orient[aAbrege] ?? [], orient[bAbrege] ?? [], ORIENTATION_POLES);
+  const half = Math.ceil(all.length / 2);
+  const themes = part === 1 ? all.slice(0, half) : all.slice(half);
 
   return new ImageResponse(
     compareCardElement({
@@ -37,6 +41,7 @@ export async function GET(req: Request) {
       a: { label: aAbrege, sub: gA.libelle, color: groupColor(aAbrege) },
       b: { label: bAbrege, sub: gB.libelle, color: groupColor(bAbrege) },
       themes,
+      part: { index: part, total: 2 },
     }),
     {
       width: 1080,
