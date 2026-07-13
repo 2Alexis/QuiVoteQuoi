@@ -87,6 +87,10 @@ export function shareCardElement(input: ShareCardInput, format: ShareFormat) {
     .filter((g) => g.tot > 0)
     .sort((a, b) => b.tot - a.tot)
     .slice(0, S.maxGroups);
+  // Hauteur des colonnes proportionnelle à l'effectif : le plus gros groupe atteint
+  // la hauteur max, les autres au prorata (avec un plancher pour rester visibles).
+  const maxTot = Math.max(1, ...groupes.map((g) => g.tot));
+  const barHeight = (tot: number) => Math.max(14, Math.round((tot / maxTot) * S.gBarH));
 
   const legendChip = (label: string, color: string) => (
     <div style={{ display: "flex", alignItems: "center", marginRight: 26 }}>
@@ -100,13 +104,13 @@ export function shareCardElement(input: ShareCardInput, format: ShareFormat) {
     n > 0 ? <div style={{ display: "flex", width: "100%", height: `${(n / tot) * 100}%`, background: color }} /> : null;
 
   // Une colonne par groupe : effectif au-dessus, barre empilée (pour en bas), abrégé
-  // dessous. Barres de même hauteur (100 %) pour comparer les répartitions d'un coup.
+  // dessous. Hauteur proportionnelle à l'effectif du groupe (cf. barHeight).
   const groupColumn = (g: (typeof groupes)[number]) => (
     <div key={g.abrege ?? "NI"} style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1 }}>
       <div style={{ display: "flex", fontSize: S.gCount, color: C.muted, marginBottom: 8 }}>{nf(g.tot)}</div>
       <div
         style={{
-          display: "flex", flexDirection: "column-reverse", width: S.gBarW, height: S.gBarH,
+          display: "flex", flexDirection: "column-reverse", width: S.gBarW, height: barHeight(g.tot),
           borderRadius: 7, overflow: "hidden", background: C.barTrack,
         }}
       >
