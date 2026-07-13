@@ -49,14 +49,14 @@ const SIZES = {
     title: 42, titleMax: 92, badge: 32, badgePad: "11px 26px",
     numLabel: 23, brandDot: 17, footer: 25,
     sectionTitle: 25, legendFont: 21, legendDot: 19,
-    gLabel: 25, gBar: 26, gRow: 39, gCount: 23, gLabelW: 168, gCountW: 84, maxGroups: 12,
+    gLabel: 19, gCount: 20, gBarW: 50, gBarH: 340, maxGroups: 12,
   },
   landscape: {
     w: 1200, h: 630, pad: 44, brand: 30, meta: 23, kicker: 20, catDot: 13,
     title: 37, titleMax: 72, badge: 27, badgePad: "8px 20px",
     numLabel: 18, brandDot: 14, footer: 20,
     sectionTitle: 20, legendFont: 16, legendDot: 14,
-    gLabel: 19, gBar: 20, gRow: 25, gCount: 17, gLabelW: 120, gCountW: 56, maxGroups: 6,
+    gLabel: 18, gCount: 16, gBarW: 74, gBarH: 98, maxGroups: 9,
   },
 } as const;
 
@@ -95,28 +95,33 @@ export function shareCardElement(input: ShareCardInput, format: ShareFormat) {
     </div>
   );
 
-  const seg = (n: number, color: string, tot: number) =>
-    n > 0 ? <div style={{ display: "flex", width: `${(n / tot) * 100}%`, background: color }} /> : null;
+  // Segment vertical d'une colonne empilée (part du vote dans la hauteur du groupe).
+  const segV = (n: number, color: string, tot: number) =>
+    n > 0 ? <div style={{ display: "flex", width: "100%", height: `${(n / tot) * 100}%`, background: color }} /> : null;
 
-  const groupRow = (g: (typeof groupes)[number]) => (
-    <div key={g.abrege ?? "NI"} style={{ display: "flex", alignItems: "center", height: S.gRow }}>
+  // Une colonne par groupe : effectif au-dessus, barre empilée (pour en bas), abrégé
+  // dessous. Barres de même hauteur (100 %) pour comparer les répartitions d'un coup.
+  const groupColumn = (g: (typeof groupes)[number]) => (
+    <div key={g.abrege ?? "NI"} style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1 }}>
+      <div style={{ display: "flex", fontSize: S.gCount, color: C.muted, marginBottom: 8 }}>{nf(g.tot)}</div>
       <div
         style={{
-          display: "flex", width: S.gLabelW, marginRight: 18,
-          fontSize: S.gLabel, fontWeight: 700, color: groupColor(g.abrege),
-          justifyContent: "flex-end", overflow: "hidden", whiteSpace: "nowrap",
+          display: "flex", flexDirection: "column-reverse", width: S.gBarW, height: S.gBarH,
+          borderRadius: 7, overflow: "hidden", background: C.barTrack,
+        }}
+      >
+        {segV(g.pour, C.pour, g.tot)}
+        {segV(g.contre, C.contre, g.tot)}
+        {segV(g.abstention, C.abstention, g.tot)}
+        {segV(g.nonvotant, C.nonvotant, g.tot)}
+      </div>
+      <div
+        style={{
+          display: "flex", marginTop: 12, fontSize: S.gLabel, fontWeight: 700,
+          color: groupColor(g.abrege), maxWidth: "100%", overflow: "hidden", whiteSpace: "nowrap",
         }}
       >
         {g.abrege ?? "NI"}
-      </div>
-      <div style={{ display: "flex", flex: 1, height: S.gBar, borderRadius: 6, overflow: "hidden", background: C.barTrack }}>
-        {seg(g.pour, C.pour, g.tot)}
-        {seg(g.contre, C.contre, g.tot)}
-        {seg(g.abstention, C.abstention, g.tot)}
-        {seg(g.nonvotant, C.nonvotant, g.tot)}
-      </div>
-      <div style={{ display: "flex", width: S.gCountW, justifyContent: "flex-end", fontSize: S.gCount, color: C.muted }}>
-        {nf(g.tot)}
       </div>
     </div>
   );
@@ -160,17 +165,19 @@ export function shareCardElement(input: ShareCardInput, format: ShareFormat) {
 
         {/* Bar plot : occupe le reste, aligné en haut */}
         <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "flex-start", marginTop: format === "square" ? 26 : 16 }}>
-          <div style={{ display: "flex", fontSize: S.sectionTitle, fontWeight: 700, marginBottom: 12 }}>
-            Comment chaque groupe a voté
-          </div>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
+          {format === "square" && (
+            <div style={{ display: "flex", fontSize: S.sectionTitle, fontWeight: 700, marginBottom: 12 }}>
+              Comment chaque groupe a voté
+            </div>
+          )}
+          <div style={{ display: "flex", alignItems: "center", marginBottom: format === "square" ? 30 : 16 }}>
             {legendChip("Pour", C.pour)}
             {legendChip("Contre", C.contre)}
             {legendChip("Abstention", C.abstention)}
             {legendChip("Non-votant", C.nonvotant)}
           </div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            {groupes.map(groupRow)}
+          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 8 }}>
+            {groupes.map(groupColumn)}
           </div>
         </div>
 
