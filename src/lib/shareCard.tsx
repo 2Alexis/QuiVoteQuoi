@@ -53,14 +53,14 @@ const SIZES = {
     title: 42, titleMax: 92, badge: 32, badgePad: "11px 26px",
     numLabel: 23, brandDot: 17, footer: 25,
     sectionTitle: 25, legendFont: 21, legendDot: 19,
-    gLabel: 19, gCount: 20, gBarW: 50, gBarH: 340, maxGroups: 12,
+    gLabel: 19, gCount: 18, gBarW: 38, gBarH: 380, maxGroups: 12,
   },
   landscape: {
     w: 1200, h: 630, pad: 44, brand: 30, meta: 23, kicker: 20, catDot: 13,
     title: 36, titleMax: 50, badge: 27, badgePad: "8px 20px",
     numLabel: 18, brandDot: 14, footer: 20,
     sectionTitle: 20, legendFont: 16, legendDot: 14,
-    gLabel: 18, gCount: 16, gBarW: 78, gBarH: 162, maxGroups: 9,
+    gLabel: 18, gCount: 15, gBarW: 56, gBarH: 176, maxGroups: 9,
   },
 } as const;
 
@@ -139,7 +139,7 @@ export function shareCardElement(input: ShareCardInput, format: ShareFormat) {
         <div
           style={{
             display: "flex", flexDirection: "column-reverse", width: S.gBarW, height: barHeight(g.membres),
-            borderRadius: 7, overflow: "hidden", background: C.barTrack,
+            borderTopLeftRadius: 7, borderTopRightRadius: 7, overflow: "hidden", background: C.barTrack,
           }}
         >
           {segV(g.pour, C.pour, g.membres, showNum && domPour ? nf(g.pour) : undefined)}
