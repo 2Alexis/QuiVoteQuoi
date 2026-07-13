@@ -12,7 +12,9 @@ import { compareCardElement, buildThemes } from "@/lib/compareCard";
 // centré sur leurs orientations par thème mises face à face. Généré à la demande
 // à partir de la sélection passée en query (?leg=&a=&b=, a/b = uid de député).
 export const runtime = "nodejs";
-export const revalidate = 3600;
+// Cache court : ces visuels sont téléchargés à la demande et le design évolue
+// souvent ; on évite qu'une ancienne image reste servie longtemps après un déploiement.
+export const revalidate = 300;
 
 // Couleurs d'identité du comparateur (un député par « côté »), volontairement
 // neutres et distinctes du teal/ambre des pôles d'orientation.
@@ -46,7 +48,7 @@ export async function GET(req: Request) {
       height: 1080,
       headers: {
         "Content-Disposition": `inline; filename="quivotequoi-comparateur-deputes.png"`,
-        "Cache-Control": "public, max-age=3600, s-maxage=3600",
+        "Cache-Control": "public, max-age=300, s-maxage=300",
       },
     },
   );

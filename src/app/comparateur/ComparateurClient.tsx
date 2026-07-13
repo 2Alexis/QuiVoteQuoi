@@ -296,8 +296,12 @@ function PartageVisuel({ href }: { href: string }) {
   const telecharger = async () => {
     if (loading) return;
     setLoading(true);
+    // Paramètre anti-cache : le rendu est mis en cache par le CDN, et après un
+    // déploiement (nouveau design, correctif…) l'ancienne image pourrait encore
+    // être servie. On force donc une génération fraîche à chaque téléchargement.
+    const frais = `${href}${href.includes("?") ? "&" : "?"}cb=${Date.now()}`;
     try {
-      const res = await fetch(href);
+      const res = await fetch(frais);
       if (!res.ok) throw new Error("génération échouée");
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -310,7 +314,7 @@ function PartageVisuel({ href }: { href: string }) {
       URL.revokeObjectURL(url);
     } catch {
       // Repli si le téléchargement direct échoue : ouvre l'image dans un onglet.
-      window.open(href, "_blank", "noopener,noreferrer");
+      window.open(frais, "_blank", "noopener,noreferrer");
     } finally {
       setLoading(false);
     }
