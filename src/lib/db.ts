@@ -769,15 +769,59 @@ export function hasOrientation(): boolean {
   return _hasOri;
 }
 
-export function categoriesScrutins(leg = DEFAULT_LEG): { categorie: string; n: number }[] {
+// Construit la clause WHERE + paramètres communs à la liste des scrutins et au
+// décompte par catégorie, à partir des mêmes filtres (recherche, législature,
+// « lois uniquement », budget). `withCategorie=false` pour le décompte, qui doit
+// rester ventilé par catégorie quelle que soit la catégorie sélectionnée.
+function scrutinsFilter(
+  opts: { search?: string; leg?: string; categorie?: string; loisOnly?: boolean; includeBudget?: boolean },
+  withCategorie = true,
+): { where: string; params: unknown[] } {
+  const leg = opts.leg ?? DEFAULT_LEG;
+  const params: unknown[] = [leg];
+  let where = "WHERE legislature = ?";
+  if (opts.search) {
+    where += " AND titre LIKE ?";
+    params.push(`%${opts.search}%`);
+  }
+  if (withCategorie && opts.categorie && hasCategorie()) {
+    where += " AND categorie = ?";
+    params.push(opts.categorie);
+  }
+  // « Lois uniquement » : votes sur l'ensemble d'un texte de loi (exclut
+  // amendements, articles, motions de censure/rejet, résolutions…).
+  if (opts.loisOnly) {
+    const parts = [
+      // Vote final sur l'ensemble d'un projet/proposition de loi.
+      "(titre LIKE '%ensemble%' AND titre LIKE '%loi%')",
+      // Ratifications / approbations d'accords (des lois à part entière),
+      // en excluant les motions (« la motion… »).
+      "((titre LIKE '%autorisant%ratification%' OR titre LIKE '%autorisant%approbation%') AND titre NOT LIKE 'la motion%')",
+    ];
+    if (opts.includeBudget) {
+      // Lois de finances / de financement (PLF, PLFSS) : votes sur une « partie ».
+      parts.push("(titre LIKE '%partie du projet de loi de finance%')");
+    }
+    where += ` AND (${parts.join(" OR ")})`;
+  }
+  return { where, params };
+}
+
+// Décompte des scrutins par catégorie, respectant les mêmes filtres que la liste
+// (lois/budget/recherche) mais SANS le filtre de catégorie — pour que les chips
+// affichent le vrai nombre dans chaque catégorie du jeu filtré courant.
+export function categoriesScrutins(
+  opts: { leg?: string; search?: string; loisOnly?: boolean; includeBudget?: boolean } = {},
+): { categorie: string; n: number }[] {
   if (!hasCategorie()) return [];
+  const { where, params } = scrutinsFilter(opts, false);
   return db()
     .prepare(
       `SELECT categorie, COUNT(*) n FROM scrutins
-       WHERE legislature = ? AND categorie IS NOT NULL
+       ${where} AND categorie IS NOT NULL
        GROUP BY categorie ORDER BY n DESC`
     )
-    .all(leg) as { categorie: string; n: number }[];
+    .all(...params) as { categorie: string; n: number }[];
 }
 
 export function allCategories(): string[] {
@@ -803,33 +847,7 @@ export function scrutins(opts: {
 }) {
   const perPage = opts.perPage ?? 30;
   const page = Math.max(1, opts.page ?? 1);
-  const leg = opts.leg ?? DEFAULT_LEG;
-  const params: unknown[] = [leg];
-  let where = "WHERE legislature = ?";
-  if (opts.search) {
-    where += " AND titre LIKE ?";
-    params.push(`%${opts.search}%`);
-  }
-  if (opts.categorie && hasCategorie()) {
-    where += " AND categorie = ?";
-    params.push(opts.categorie);
-  }
-  // « Lois uniquement » : votes sur l'ensemble d'un texte de loi (exclut
-  // amendements, articles, motions de censure/rejet, résolutions…).
-  if (opts.loisOnly) {
-    const parts = [
-      // Vote final sur l'ensemble d'un projet/proposition de loi.
-      "(titre LIKE '%ensemble%' AND titre LIKE '%loi%')",
-      // Ratifications / approbations d'accords (des lois à part entière),
-      // en excluant les motions (« la motion… »).
-      "((titre LIKE '%autorisant%ratification%' OR titre LIKE '%autorisant%approbation%') AND titre NOT LIKE 'la motion%')",
-    ];
-    if (opts.includeBudget) {
-      // Lois de finances / de financement (PLF, PLFSS) : votes sur une « partie ».
-      parts.push("(titre LIKE '%partie du projet de loi de finance%')");
-    }
-    where += ` AND (${parts.join(" OR ")})`;
-  }
+  const { where, params } = scrutinsFilter(opts);
   const total = (
     db().prepare(`SELECT COUNT(*) n FROM scrutins ${where}`).get(...params) as { n: number }
   ).n;

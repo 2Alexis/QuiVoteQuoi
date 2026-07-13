@@ -19,8 +19,11 @@ export const metadata: Metadata = pageMeta({
 
 export default function ScrutinsPage() {
   const legs = legislatures();
+  // Décompte par catégorie de l'état PAR DÉFAUT (lois + budget), pour que les chips
+  // affichent d'emblée les vrais chiffres du jeu filtré, pas le total tous scrutins.
   const catsByLeg: Record<string, { categorie: string; n: number }[]> = {};
-  for (const leg of legs) catsByLeg[leg] = categoriesScrutins(leg);
+  for (const leg of legs)
+    catsByLeg[leg] = categoriesScrutins({ leg, loisOnly: true, includeBudget: true });
 
   const first = scrutins({
     leg: legs[0],

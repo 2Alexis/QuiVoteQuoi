@@ -7,15 +7,17 @@ import { VoteBar, LegSwitcher, CategoriePill, OrientationPill } from "@/componen
 import { ScrutinCard } from "@/components/ScrutinCard";
 import type { Scrutin } from "@/lib/db";
 
+interface Cat {
+  categorie: string;
+  n: number;
+}
 interface PageData {
   rows: Scrutin[];
   total: number;
   pages: number;
   page: number;
-}
-interface Cat {
-  categorie: string;
-  n: number;
+  // Décompte par catégorie du jeu filtré courant (renvoyé par /api/scrutins).
+  cats?: Cat[];
 }
 
 // Rendu client de /scrutins. La page-coquille + la 1re page par défaut sont
@@ -41,6 +43,9 @@ export function ScrutinsClient({
   const [page, setPage] = useState(1);
   const [data, setData] = useState<PageData>(initial);
   const [loading, setLoading] = useState(false);
+  // Compteurs des chips : état par défaut au 1er rendu (statique), puis remplacés
+  // par ceux du jeu filtré que renvoie /api/scrutins à chaque changement de filtre.
+  const [cats, setCats] = useState<Cat[]>(catsByLeg[legs[0]] ?? []);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQ(q.trim()), 300);
@@ -67,6 +72,7 @@ export function ScrutinsClient({
       .then((r) => r.json())
       .then((d: PageData) => {
         setData(d);
+        if (d.cats) setCats(d.cats);
         setLoading(false);
       })
       .catch((e) => {
@@ -79,6 +85,9 @@ export function ScrutinsClient({
     setLeg(l);
     setCat("");
     setPage(1);
+    // Repli instantané sur les compteurs par défaut de la législature ; l'API
+    // réajuste ensuite selon les filtres actifs.
+    setCats(catsByLeg[l] ?? []);
   };
   const onCat = (c: string) => {
     setCat(c);
@@ -93,7 +102,6 @@ export function ScrutinsClient({
     setPage(1);
   };
 
-  const cats = catsByLeg[leg] ?? [];
   const { rows, total, pages } = data;
 
   return (

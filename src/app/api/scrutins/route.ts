@@ -1,4 +1,4 @@
-import { scrutins } from "@/lib/db";
+import { scrutins, categoriesScrutins } from "@/lib/db";
 
 // Pagination / filtrage des scrutins pour la page /scrutins (rendue en statique).
 // La liste peut atteindre des milliers de lignes : on ne les embarque donc pas
@@ -9,14 +9,21 @@ export const dynamic = "force-dynamic";
 
 export function GET(req: Request) {
   const u = new URL(req.url).searchParams;
+  const search = u.get("q")?.trim() || undefined;
+  const leg = u.get("leg") || undefined;
+  const loisOnly = u.get("loi") !== "0";
+  const includeBudget = u.get("budget") !== "0";
   const { rows, total, pages, page } = scrutins({
-    search: u.get("q")?.trim() || undefined,
+    search,
     page: parseInt(u.get("page") ?? "1", 10) || 1,
     perPage: 25,
-    leg: u.get("leg") || undefined,
+    leg,
     categorie: u.get("cat") || undefined,
-    loisOnly: u.get("loi") !== "0",
-    includeBudget: u.get("budget") !== "0",
+    loisOnly,
+    includeBudget,
   });
-  return Response.json({ rows, total, pages, page });
+  // Compteurs par catégorie du même jeu filtré (hors filtre de catégorie) : les
+  // chips reflètent ainsi le nombre réel dans chaque catégorie une fois filtré.
+  const cats = categoriesScrutins({ leg, search, loisOnly, includeBudget });
+  return Response.json({ rows, total, pages, page, cats });
 }
