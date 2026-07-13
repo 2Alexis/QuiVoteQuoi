@@ -57,10 +57,10 @@ const SIZES = {
   },
   landscape: {
     w: 1200, h: 630, pad: 44, brand: 30, meta: 23, kicker: 20, catDot: 13,
-    title: 37, titleMax: 72, badge: 27, badgePad: "8px 20px",
+    title: 36, titleMax: 50, badge: 27, badgePad: "8px 20px",
     numLabel: 18, brandDot: 14, footer: 20,
     sectionTitle: 20, legendFont: 16, legendDot: 14,
-    gLabel: 18, gCount: 16, gBarW: 74, gBarH: 98, maxGroups: 9,
+    gLabel: 18, gCount: 16, gBarW: 78, gBarH: 162, maxGroups: 9,
   },
 } as const;
 
