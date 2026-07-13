@@ -224,14 +224,19 @@ export function MetricRing({
   );
 }
 
+// Sélecteur de législature. Deux modes : navigation par lien (`base` → ?leg=…)
+// pour les pages serveur, ou rappel `onSelect` pour un basculement client instantané
+// (pages statiques dont les données des deux législatures sont déjà chargées).
 export function LegSwitcher({
   current,
   base,
   legislatures,
+  onSelect,
 }: {
   current: string;
-  base: string;
+  base?: string;
   legislatures: string[];
+  onSelect?: (leg: string) => void;
 }) {
   return (
     <div className="inline-flex items-center gap-2">
@@ -241,16 +246,18 @@ export function LegSwitcher({
       <div className="inline-flex overflow-hidden rounded-lg border border-[var(--border)] text-sm">
         {legislatures.map((l) => {
           const active = l === current;
-          return (
-            <Link
-              key={l}
-              href={`${base}?leg=${l}`}
-              className={`px-3 py-1.5 font-medium ${
-                active
-                  ? "bg-[var(--accent)] text-white"
-                  : "bg-[var(--surface)] text-[var(--muted)] hover:text-[var(--foreground)]"
-              }`}
-            >
+          const cls = `px-3 py-1.5 font-medium ${
+            active
+              ? "bg-[var(--accent)] text-white"
+              : "bg-[var(--surface)] text-[var(--muted)] hover:text-[var(--foreground)]"
+          }`;
+          return onSelect ? (
+            <button key={l} type="button" onClick={() => onSelect(l)} className={cls}>
+              {l}
+              <sup>e</sup>
+            </button>
+          ) : (
+            <Link key={l} href={`${base ?? ""}?leg=${l}`} className={cls}>
               {l}
               <sup>e</sup>
             </Link>
