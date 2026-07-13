@@ -18,16 +18,18 @@ export function FranceMapLazy({
   aggregats,
   leg,
   selected,
+  onSelect,
 }: {
   width: number;
   height: number;
   aggregats: Record<string, DeptAgg>;
   leg: string;
   selected?: string;
+  onSelect?: (code: string) => void;
 }) {
   return (
     <div style={{ aspectRatio: `${width} / ${height}` }} className="w-full">
-      <FranceMap aggregats={aggregats} leg={leg} selected={selected} />
+      <FranceMap aggregats={aggregats} leg={leg} selected={selected} onSelect={onSelect} />
     </div>
   );
 }

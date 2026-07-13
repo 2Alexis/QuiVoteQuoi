@@ -1,14 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { DeputeCarte } from "@/components/DeputeCarte";
-import type { Depute } from "@/lib/db";
+import { DeputeCarte, type DeputeCardData } from "@/components/DeputeCarte";
 
 // Liste des anciens députés au-delà de l'aperçu : rendue à l'ouverture seulement.
 // Les cartes (photo + badge par député) ne sont donc PAS incluses dans le HTML
 // initial de /deputes — ce qui allégeait la page de ~57 cartes rendues pour rien
 // dans un <details> replié. Seules les données (légères) transitent en props.
-export function AnciensReste({ deputes, leg }: { deputes: Depute[]; leg: string }) {
+export function AnciensReste({ deputes, leg }: { deputes: DeputeCardData[]; leg: string }) {
   const [open, setOpen] = useState(false);
   if (deputes.length === 0) return null;
   return (

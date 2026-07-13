@@ -2,7 +2,19 @@ import Link from "next/link";
 import { GroupBadge } from "@/components/bits";
 import { DeputePhoto } from "@/components/DeputePhoto";
 import { deputePhotoUrl, groupColor } from "@/lib/ui";
-import type { Depute } from "@/lib/db";
+
+// Champs strictement nécessaires à la carte : permet de n'embarquer côté client
+// que ces données légères (pas la profession, la civilité… de ~1300 députés).
+export interface DeputeCardData {
+  uid: string;
+  prenom: string;
+  nom: string;
+  groupe_abrege: string | null;
+  groupe_libelle: string | null;
+  dept: string | null;
+  num_circo: string | null;
+  cause_fin?: string | null;
+}
 
 // Étiquette courte pour le motif de fin de mandat d'un ancien député.
 export function causeCourte(cause: string | null | undefined): string | null {
@@ -22,7 +34,7 @@ export function causeCourte(cause: string | null | undefined): string | null {
 // Carte d'un député, réutilisée pour les mandats en cours et les anciens députés.
 // Module « partagé » (sans "use client") : rendu côté serveur dans la liste
 // principale, et côté client dans AnciensReste (chargement à l'ouverture).
-export function DeputeCarte({ d, leg, ancien }: { d: Depute; leg: string; ancien?: boolean }) {
+export function DeputeCarte({ d, leg, ancien }: { d: DeputeCardData; leg: string; ancien?: boolean }) {
   const cause = ancien ? causeCourte(d.cause_fin) : null;
   return (
     <Link
