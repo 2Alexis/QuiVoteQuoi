@@ -148,13 +148,13 @@ export function CohesionInterne({ positions }: { positions: GroupePos[] }) {
   );
 }
 
-export function TetesAffiche({
-  positions,
-  deputes,
-}: {
-  positions: GroupePos[];
-  deputes: DeputeFig[];
-}) {
+// Sélection des têtes d'affiche par groupe (liste fixe TETES_AFFICHE, appariée
+// aux députés par nom normalisé). Calculée côté serveur pour ne PAS transmettre
+// les ~577 députés au client : seules les quelques figures retenues transitent.
+export function selectFigures(
+  positions: GroupePos[],
+  deputes: DeputeFig[]
+): Record<string, DeputeFig[]> {
   const idx = new Map<string, DeputeFig>();
   for (const d of deputes) idx.set(normNom(`${d.prenom} ${d.nom}`), d);
   const figuresParGroupe: Record<string, DeputeFig[]> = {};
@@ -165,7 +165,17 @@ export function TetesAffiche({
       .filter((x): x is DeputeFig => Boolean(x) && x!.abrege === g.abrege);
     if (found.length) figuresParGroupe[g.uid] = found;
   }
-  const groupesAvecFigures = positions.filter((g) => figuresParGroupe[g.uid]?.length);
+  return figuresParGroupe;
+}
+
+export function TetesAffiche({
+  positions,
+  figures,
+}: {
+  positions: GroupePos[];
+  figures: Record<string, DeputeFig[]>;
+}) {
+  const groupesAvecFigures = positions.filter((g) => figures[g.uid]?.length);
   if (groupesAvecFigures.length === 0) return null;
 
   return (
@@ -182,7 +192,7 @@ export function TetesAffiche({
             <span className="min-w-0 truncate text-sm text-[var(--muted)]">{g.libelle}</span>
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {figuresParGroupe[g.uid].map((d) => (
+            {figures[g.uid].map((d) => (
               <Link
                 key={d.uid}
                 href={`/deputes/${d.uid}`}

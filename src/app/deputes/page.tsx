@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { DEFAULT_LEG } from "@/lib/db";
 import {
-  deputesCached,
-  groupesCached,
-  legislaturesCached,
-  siegesActuelsCached,
-  uidsTitulairesCached,
-} from "@/lib/db-cached";
+  deputes,
+  groupes,
+  legislatures,
+  siegesActuels,
+  uidsTitulaires,
+  DEFAULT_LEG,
+} from "@/lib/db";
 import { LegSwitcher } from "@/components/bits";
 import { type DeptAgg } from "@/components/FranceMap";
 import { FranceMapLazy } from "@/components/FranceMapLazy";
@@ -45,14 +45,14 @@ export default async function DeputesPage({
   const g = sp.g || undefined;
   const leg = sp.leg || DEFAULT_LEG;
   const dept = sp.dept || undefined;
-  const list = await deputesCached(search, g, leg, dept);
-  const gs = await groupesCached(leg);
-  const legs = await legislaturesCached();
+  const list = deputes(search, g, leg, dept);
+  const gs = groupes(leg);
+  const legs = legislatures();
 
   // Sépare les mandats en cours (titulaire courant de chaque siège = 577) des
   // anciens députés (remplacés en cours de législature : ministres, démissions,
   // décès…). uidsTitulaires s'appuie sur les dates de mandat officielles.
-  const titulaires = new Set(await uidsTitulairesCached(leg));
+  const titulaires = uidsTitulaires(leg);
   const actifs = list.filter((d) => titulaires.has(d.uid));
   const anciens = list.filter((d) => !titulaires.has(d.uid));
   const ANCIENS_APERCU = 12;
@@ -81,7 +81,7 @@ export default async function DeputesPage({
   };
 
   // Agrégats par département (siège = titulaire actuel), pour colorer la carte.
-  const sieges = await siegesActuelsCached(leg);
+  const sieges = siegesActuels(leg);
   const acc: Record<string, { nom: string | null; n: number; byGroup: Record<string, number> }> = {};
   for (const s of sieges) {
     const code = s.num_dept ?? "?";
