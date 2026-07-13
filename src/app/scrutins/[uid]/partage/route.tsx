@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { scrutin } from "@/lib/db";
+import { scrutin, ventilationScrutin } from "@/lib/db";
 import { shareCardElement } from "@/lib/shareCard";
 
 // Visuel carré 1080×1080 téléchargeable (format post Instagram), généré à la
@@ -24,6 +24,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ uid: st
         contre: sc.contre ?? 0,
         abstention: sc.abstentions ?? 0,
         nonvotant: sc.non_votants ?? 0,
+        groupes: ventilationScrutin(uid),
       },
       "square",
     ),
