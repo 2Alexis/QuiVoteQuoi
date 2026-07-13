@@ -286,50 +286,51 @@ function OrientationVs({
   );
 }
 
-// Bouton de téléchargement du visuel de partage (carré Instagram) d'une comparaison.
-// La sélection courante est encodée dans l'URL de la route image (route serveur
-// `next/og`), la page comparateur restant statique. Comme l'image est générée à la
-// demande (1–3 s), on la récupère en `fetch` pour afficher un indicateur de
-// chargement, puis on déclenche le téléchargement depuis le blob obtenu.
+// Boutons de téléchargement du visuel de partage (carrousel Instagram) d'une
+// comparaison. Les thèmes sont répartis sur 2 images ; un bouton par image, pour
+// que chaque téléchargement soit un clic distinct (sinon le navigateur demande
+// d'« autoriser les téléchargements multiples »). La sélection courante est encodée
+// dans l'URL de la route image ; on récupère chaque image en `fetch` (indicateur de
+// chargement + anti-cache) puis on déclenche le téléchargement depuis le blob.
 function PartageVisuel({ href }: { href: string }) {
-  const [loading, setLoading] = useState(false);
-  const telecharger = async () => {
-    if (loading) return;
-    setLoading(true);
-    const sep = href.includes("?") ? "&" : "?";
+  const [loadingPart, setLoadingPart] = useState<number | null>(null);
+  const sep = href.includes("?") ? "&" : "?";
+
+  const telecharger = async (part: number) => {
+    if (loadingPart !== null) return;
+    setLoadingPart(part);
+    // Date.now() = anti-cache unique ; appelé dans un gestionnaire d'événement
+    // (jamais au rendu), la règle de pureté est ici un faux positif.
+    // eslint-disable-next-line react-hooks/purity
+    const frais = `${href}${sep}part=${part}&cb=${Date.now()}`;
     try {
-      // Deux images (carrousel) : la 1re moitié des thèmes, puis le reste. Le
-      // paramètre `cb` (anti-cache) garantit une image fraîche à chaque fois.
-      for (const part of [1, 2]) {
-        const res = await fetch(`${href}${sep}part=${part}&cb=${Date.now()}`);
-        if (!res.ok) continue;
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `quivotequoi-comparateur-${part}.png`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-        // Laisser le 1er téléchargement démarrer avant de lancer le 2e (sinon
-        // certains navigateurs ignorent le second).
-        if (part === 1) await new Promise((r) => setTimeout(r, 500));
-      }
+      const res = await fetch(frais);
+      if (!res.ok) throw new Error("génération échouée");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `quivotequoi-comparateur-${part}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
     } catch {
-      // Repli si le téléchargement direct échoue : ouvre la 1re image dans un onglet.
-      window.open(`${href}${sep}part=1`, "_blank", "noopener,noreferrer");
+      // Repli si le téléchargement direct échoue : ouvre l'image dans un onglet.
+      window.open(frais, "_blank", "noopener,noreferrer");
     } finally {
-      setLoading(false);
+      setLoadingPart(null);
     }
   };
-  return (
-    <div className="flex flex-wrap items-center gap-2 border-t border-[var(--border)] pt-4">
-      <span className="text-xs text-[var(--muted)]">Partager cette comparaison (2 images) :</span>
+
+  const bouton = (part: number) => {
+    const loading = loadingPart === part;
+    return (
       <button
+        key={part}
         type="button"
-        onClick={telecharger}
-        disabled={loading}
+        onClick={() => telecharger(part)}
+        disabled={loadingPart !== null}
         aria-busy={loading}
         className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] px-3 py-1.5 text-xs font-medium text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-wait disabled:opacity-70"
       >
@@ -345,8 +346,16 @@ function PartageVisuel({ href }: { href: string }) {
             <path d="M12 15V3" />
           </svg>
         )}
-        {loading ? "Génération…" : "Visuel à partager"}
+        {loading ? "Génération…" : `Image ${part}`}
       </button>
+    );
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 border-t border-[var(--border)] pt-4">
+      <span className="text-xs text-[var(--muted)]">Partager (carrousel, 2 images) :</span>
+      {bouton(1)}
+      {bouton(2)}
     </div>
   );
 }
