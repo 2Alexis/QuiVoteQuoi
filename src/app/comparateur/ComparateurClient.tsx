@@ -286,25 +286,59 @@ function OrientationVs({
   );
 }
 
-// Lien de téléchargement du visuel de partage (carré Instagram) d'une comparaison.
+// Bouton de téléchargement du visuel de partage (carré Instagram) d'une comparaison.
 // La sélection courante est encodée dans l'URL de la route image (route serveur
-// `next/og`), la page comparateur restant statique.
+// `next/og`), la page comparateur restant statique. Comme l'image est générée à la
+// demande (1–3 s), on la récupère en `fetch` pour afficher un indicateur de
+// chargement, puis on déclenche le téléchargement depuis le blob obtenu.
 function PartageVisuel({ href }: { href: string }) {
+  const [loading, setLoading] = useState(false);
+  const telecharger = async () => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      const res = await fetch(href);
+      if (!res.ok) throw new Error("génération échouée");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "quivotequoi-comparateur.png";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      // Repli si le téléchargement direct échoue : ouvre l'image dans un onglet.
+      window.open(href, "_blank", "noopener,noreferrer");
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="flex flex-wrap items-center gap-2 border-t border-[var(--border)] pt-4">
       <span className="text-xs text-[var(--muted)]">Partager cette comparaison :</span>
-      <a
-        href={href}
-        download="quivotequoi-comparateur.png"
-        className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] px-3 py-1.5 text-xs font-medium text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+      <button
+        type="button"
+        onClick={telecharger}
+        disabled={loading}
+        aria-busy={loading}
+        className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] px-3 py-1.5 text-xs font-medium text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-wait disabled:opacity-70"
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5" aria-hidden>
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <path d="M7 10l5 5 5-5" />
-          <path d="M12 15V3" />
-        </svg>
-        Visuel à partager
-      </a>
+        {loading ? (
+          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 animate-spin" aria-hidden>
+            <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeOpacity="0.25" strokeWidth="3" />
+            <path d="M21 12a9 9 0 0 0-9-9" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5" aria-hidden>
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <path d="M7 10l5 5 5-5" />
+            <path d="M12 15V3" />
+          </svg>
+        )}
+        {loading ? "Génération…" : "Visuel à partager"}
+      </button>
     </div>
   );
 }
