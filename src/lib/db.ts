@@ -897,6 +897,15 @@ export interface DeputeCompare {
   align: number;
   alignClivant: number;
   n_exprime: number;
+  // Numérateurs / dénominateurs bruts, pour afficher le détail « X/Y » comme sur
+  // la fiche d'un député (jauges circulaires du comparateur).
+  n_concerne: number;
+  n_loyal: number;
+  n_loyal_denom: number;
+  n_align: number;
+  n_align_denom: number;
+  n_align_cliv: number;
+  n_align_cliv_denom: number;
 }
 
 export function deputesPourComparaison(leg = DEFAULT_LEG): DeputeCompare[] {
@@ -922,6 +931,13 @@ export function deputesPourComparaison(leg = DEFAULT_LEG): DeputeCompare[] {
         abrege: x.abrege as string | null,
         groupe_uid: x.groupe_uid as string | null,
         n_exprime: (x.n_exprime as number) ?? 0,
+        n_concerne: (x.n_concerne as number) ?? 0,
+        n_loyal: (x.n_loyal as number) ?? 0,
+        n_loyal_denom: (x.n_loyal_denom as number) ?? 0,
+        n_align: (x.n_align as number) ?? 0,
+        n_align_denom: (x.n_align_denom as number) ?? 0,
+        n_align_cliv: (x.n_align_cliv as number) ?? 0,
+        n_align_cliv_denom: (x.n_align_cliv_denom as number) ?? 0,
         participation: x.n_concerne ? (x.n_exprime as number) / (x.n_concerne as number) : 0,
         loyaute: x.n_loyal_denom ? (x.n_loyal as number) / (x.n_loyal_denom as number) : 0,
         align: x.n_align_denom ? (x.n_align as number) / (x.n_align_denom as number) : 0,

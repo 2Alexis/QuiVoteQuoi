@@ -5,6 +5,7 @@ import Link from "next/link";
 import { PRESIDENTS, dureeAnnees, type President } from "@/data/presidents";
 import { groupColor, groupOrder, ORIENTATION_POLES } from "@/lib/ui";
 import { FIGURES_SET, normNom } from "@/lib/figures";
+import { MetricRing } from "@/components/bits";
 
 export interface DeputeCompareC {
   uid: string;
@@ -17,6 +18,13 @@ export interface DeputeCompareC {
   align: number;
   alignClivant: number;
   n_exprime: number;
+  n_concerne: number;
+  n_loyal: number;
+  n_loyal_denom: number;
+  n_align: number;
+  n_align_denom: number;
+  n_align_cliv: number;
+  n_align_cliv_denom: number;
 }
 export interface GroupePositionC {
   uid: string;
@@ -507,32 +515,6 @@ function FaceAFace({
   );
 }
 
-function Metric({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: number;
-  hint: string;
-}) {
-  return (
-    <div>
-      <div className="flex items-baseline justify-between">
-        <span className="text-sm font-medium">{label}</span>
-        <span className="stat-num text-sm font-bold">{pct(value)}</span>
-      </div>
-      <div className="mt-1 h-1.5 w-full overflow-hidden rounded bg-[var(--border)]">
-        <div
-          className="h-full rounded bg-[var(--accent)]"
-          style={{ width: `${Math.round(value * 100)}%` }}
-        />
-      </div>
-      <div className="mt-0.5 text-[11px] text-[var(--muted)]">{hint}</div>
-    </div>
-  );
-}
-
 // Sélecteur d'un député : filtre par groupe, filtre par nom, puis choix dans la
 // liste résultante (plafonnée pour rester fluide). Partagé par les colonnes
 // desktop et la vue face à face mobile, seuls endroits où l'on change de député.
@@ -650,25 +632,25 @@ function ColonneDepute({
               </p>
             )}
             <div className="space-y-2.5">
-              <Metric
+              <MetricRing
                 label="Participation"
                 value={d.participation}
-                hint={`${d.n_exprime} votes exprimés`}
+                hint={`${d.n_exprime} votes exprimés sur ${d.n_concerne} scrutins`}
               />
-              <Metric
+              <MetricRing
                 label="Loyauté au groupe"
                 value={d.loyaute}
-                hint="Vote comme la majorité de son groupe"
+                hint={`Suit la position majoritaire de son groupe (${d.n_loyal}/${d.n_loyal_denom})`}
               />
-              <Metric
+              <MetricRing
                 label="Alignement présidentiel"
                 value={d.align}
-                hint="Vote comme le bloc présidentiel"
+                hint={`Vote comme le bloc présidentiel (${d.n_align}/${d.n_align_denom})`}
               />
-              <Metric
-                label="… sur les votes clivants"
+              <MetricRing
+                label="Alignement (votes clivants)"
                 value={d.alignClivant}
-                hint="Alignement hors votes quasi-unanimes"
+                hint={`Hors votes quasi-unanimes (${d.n_align_cliv}/${d.n_align_cliv_denom})`}
               />
             </div>
             <div className="border-t border-[var(--border)] pt-3">
