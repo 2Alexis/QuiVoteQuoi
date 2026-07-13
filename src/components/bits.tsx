@@ -269,12 +269,18 @@ export function CategorieVotesList({
     return <p className="text-sm text-[var(--muted)]">Aucune donnée par catégorie.</p>;
   return (
     <div className="space-y-3">
-      <p className="text-xs leading-relaxed text-[var(--muted)]">
-        <b className="text-[var(--foreground)]">Approbation</b> = répartition des
-        votes (pour / contre / abstention), tous textes confondus ;{" "}
-        <b className="text-[var(--foreground)]">Orientation</b> = tendance gauche-droite, mesurée
-        uniquement sur les textes clairement marqués à gauche ou à droite.
-      </p>
+      <dl className="space-y-1 text-xs leading-relaxed text-[var(--muted)]">
+        <div>
+          <dt className="inline font-semibold text-[var(--foreground)]">Approbation :</dt>{" "}
+          <dd className="inline">part des votes pour / contre / abstention, tous textes confondus.</dd>
+        </div>
+        <div>
+          <dt className="inline font-semibold text-[var(--foreground)]">Orientation :</dt>{" "}
+          <dd className="inline">
+            tendance gauche-droite, sur les seuls textes marqués à gauche ou à droite.
+          </dd>
+        </div>
+      </dl>
       <div className="divide-y divide-[var(--border)]">
         {rows.map((r) => {
           const exp = r.pour + r.contre + r.abstention || 1;
