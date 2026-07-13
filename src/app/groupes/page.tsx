@@ -1,12 +1,12 @@
 import Link from "next/link";
+import { DEFAULT_LEG } from "@/lib/db";
 import {
-  compositionActuelle,
-  professionsParGroupe,
-  legislatures,
-  positionsGroupes,
-  deputesPourComparaison,
-  DEFAULT_LEG,
-} from "@/lib/db";
+  compositionActuelleCached,
+  professionsParGroupeCached,
+  legislaturesCached,
+  positionsGroupesCached,
+  deputesPourComparaisonCached,
+} from "@/lib/db-cached";
 import { LegSwitcher, ProfessionsGroupes } from "@/components/bits";
 import { GroupLogo } from "@/components/GroupLogo";
 import { MdsMap, CohesionInterne, TetesAffiche } from "@/components/GroupeViz";
@@ -31,11 +31,12 @@ export default async function GroupesPage({
   const leg = sp.leg || DEFAULT_LEG;
   // Composition instantanée (un titulaire courant par circonscription) plutôt que
   // le cumul des passages : les effectifs affichés reflètent les 577 sièges réels.
-  const gs = compositionActuelle(leg);
+  const gs = await compositionActuelleCached(leg);
   const total = gs.reduce((a, g) => a + (g.n ?? 0), 0);
-  const profs = professionsParGroupe(leg);
-  const positions = positionsGroupes(leg);
-  const deputesCompare = deputesPourComparaison(leg);
+  const profs = await professionsParGroupeCached(leg);
+  const positions = await positionsGroupesCached(leg);
+  const deputesCompare = await deputesPourComparaisonCached(leg);
+  const legs = await legislaturesCached();
 
   return (
     <div className="space-y-6">
@@ -46,7 +47,7 @@ export default async function GroupesPage({
             {gs.length} groupes · {total} sièges
           </p>
         </div>
-        <LegSwitcher current={leg} base="/groupes" legislatures={legislatures()} />
+        <LegSwitcher current={leg} base="/groupes" legislatures={legs} />
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

@@ -1,9 +1,18 @@
 import Link from "next/link";
-import { deputes, groupes, legislatures, siegesActuels, uidsTitulaires, DEFAULT_LEG, type Depute } from "@/lib/db";
-import { GroupBadge, LegSwitcher } from "@/components/bits";
-import { FranceMap, type DeptAgg } from "@/components/FranceMap";
-import { DeputePhoto } from "@/components/DeputePhoto";
-import { deputePhotoUrl, groupColor, groupOrder } from "@/lib/ui";
+import { DEFAULT_LEG } from "@/lib/db";
+import {
+  deputesCached,
+  groupesCached,
+  legislaturesCached,
+  siegesActuelsCached,
+  uidsTitulairesCached,
+} from "@/lib/db-cached";
+import { LegSwitcher } from "@/components/bits";
+import { type DeptAgg } from "@/components/FranceMap";
+import { FranceMapLazy } from "@/components/FranceMapLazy";
+import { DeputeCarte } from "@/components/DeputeCarte";
+import { AnciensReste } from "@/components/AnciensReste";
+import { groupColor, groupOrder } from "@/lib/ui";
 import departementsData from "@/data/departements.json";
 import type { Metadata } from "next";
 import { pageMeta } from "@/lib/site";
@@ -18,55 +27,6 @@ export const metadata: Metadata = pageMeta({
 });
 
 const METRO_CODES = new Set(departementsData.departements.map((d) => d.code));
-
-// Étiquette courte pour le motif de fin de mandat d'un ancien député.
-function causeCourte(cause: string | null | undefined): string | null {
-  if (!cause) return null;
-  const c = cause.toLowerCase();
-  if (c.includes("gouvernement") && c.includes("nomination")) return "Entré·e au Gouvernement";
-  if (c.includes("reprise")) return "Remplacé·e (retour d’un ministre)";
-  if (c.includes("incompatibilit")) return "Incompatibilité (cumul)";
-  if (c.includes("annulation")) return "Élection annulée";
-  if (c.includes("conseil constitutionnel")) return "Décision du Conseil const.";
-  if (c.includes("décès") || c.includes("deces")) return "Décès";
-  if (c.includes("mission")) return "Mission temporaire";
-  if (c.includes("démission") || c.includes("demission")) return "Démission";
-  return cause;
-}
-
-// Carte d'un député, réutilisée pour les mandats en cours et les anciens députés.
-function DeputeCarte({ d, leg, ancien }: { d: Depute; leg: string; ancien?: boolean }) {
-  const cause = ancien ? causeCourte(d.cause_fin) : null;
-  return (
-    <Link
-      href={`/deputes/${d.uid}`}
-      className={`card flex flex-col items-center gap-2 p-4 text-center transition hover:scale-[1.02] hover:shadow-sm ${
-        ancien ? "opacity-90" : ""
-      }`}
-      style={{ borderTop: `3px solid ${groupColor(d.groupe_abrege)}` }}
-    >
-      <DeputePhoto
-        src={deputePhotoUrl(d.uid, leg)}
-        prenom={d.prenom}
-        nom={d.nom}
-        color={groupColor(d.groupe_abrege)}
-        size={88}
-      />
-      <div className="font-semibold leading-tight">
-        {d.prenom} {d.nom}
-      </div>
-      <div className="text-xs text-[var(--muted)]">
-        {d.dept ? `${d.dept} · circo. ${d.num_circo}` : "—"}
-      </div>
-      <GroupBadge abrege={d.groupe_abrege} libelle={d.groupe_libelle} />
-      {cause && (
-        <span className="mt-0.5 rounded-full bg-[var(--border)]/60 px-2 py-0.5 text-[11px] text-[var(--muted)]">
-          {cause}
-        </span>
-      )}
-    </Link>
-  );
-}
 
 export default async function DeputesPage({
   searchParams,
@@ -85,13 +45,14 @@ export default async function DeputesPage({
   const g = sp.g || undefined;
   const leg = sp.leg || DEFAULT_LEG;
   const dept = sp.dept || undefined;
-  const list = deputes(search, g, leg, dept);
-  const gs = groupes(leg);
+  const list = await deputesCached(search, g, leg, dept);
+  const gs = await groupesCached(leg);
+  const legs = await legislaturesCached();
 
   // Sépare les mandats en cours (titulaire courant de chaque siège = 577) des
   // anciens députés (remplacés en cours de législature : ministres, démissions,
   // décès…). uidsTitulaires s'appuie sur les dates de mandat officielles.
-  const titulaires = uidsTitulaires(leg);
+  const titulaires = new Set(await uidsTitulairesCached(leg));
   const actifs = list.filter((d) => titulaires.has(d.uid));
   const anciens = list.filter((d) => !titulaires.has(d.uid));
   const ANCIENS_APERCU = 12;
@@ -120,7 +81,7 @@ export default async function DeputesPage({
   };
 
   // Agrégats par département (siège = titulaire actuel), pour colorer la carte.
-  const sieges = siegesActuels(leg);
+  const sieges = await siegesActuelsCached(leg);
   const acc: Record<string, { nom: string | null; n: number; byGroup: Record<string, number> }> = {};
   for (const s of sieges) {
     const code = s.num_dept ?? "?";
@@ -162,7 +123,7 @@ export default async function DeputesPage({
             {anciens.length > 0 && ` · ${anciens.length} anciens`}
           </p>
         </div>
-        <LegSwitcher current={leg} base="/deputes" legislatures={legislatures()} />
+        <LegSwitcher current={leg} base="/deputes" legislatures={legs} />
       </div>
 
       <form className="flex flex-wrap gap-2" action="/deputes">
@@ -273,21 +234,7 @@ export default async function DeputesPage({
               <DeputeCarte key={d.uid} d={d} leg={leg} ancien />
             ))}
           </div>
-          {anciensReste.length > 0 && (
-            <details className="group">
-              <summary className="cursor-pointer list-none rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-center text-sm font-medium text-[var(--muted)] hover:text-[var(--foreground)]">
-                <span className="group-open:hidden">
-                  Voir les {anciensReste.length} autres anciens députés ▾
-                </span>
-                <span className="hidden group-open:inline">Réduire ▴</span>
-              </summary>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {anciensReste.map((d) => (
-                  <DeputeCarte key={d.uid} d={d} leg={leg} ancien />
-                ))}
-              </div>
-            </details>
-          )}
+          <AnciensReste deputes={anciensReste} leg={leg} />
         </section>
       )}
 
@@ -301,7 +248,13 @@ export default async function DeputesPage({
           )}
         </div>
         <div className="mx-auto max-w-xl">
-          <FranceMap aggregats={aggregats} leg={leg} selected={dept} />
+          <FranceMapLazy
+            width={departementsData.width}
+            height={departementsData.height}
+            aggregats={aggregats}
+            leg={leg}
+            selected={dept}
+          />
         </div>
         <p className="text-center text-xs text-[var(--muted)]">
           Chaque département est coloré selon le groupe majoritaire de ses députés. Cliquez pour
