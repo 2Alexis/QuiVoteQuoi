@@ -286,6 +286,29 @@ function OrientationVs({
   );
 }
 
+// Lien de téléchargement du visuel de partage (carré Instagram) d'une comparaison.
+// La sélection courante est encodée dans l'URL de la route image (route serveur
+// `next/og`), la page comparateur restant statique.
+function PartageVisuel({ href }: { href: string }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 border-t border-[var(--border)] pt-4">
+      <span className="text-xs text-[var(--muted)]">Partager cette comparaison :</span>
+      <a
+        href={href}
+        download="quivotequoi-comparateur.png"
+        className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] px-3 py-1.5 text-xs font-medium text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5" aria-hidden>
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <path d="M7 10l5 5 5-5" />
+          <path d="M12 15V3" />
+        </svg>
+        Visuel à partager
+      </a>
+    </div>
+  );
+}
+
 export default function ComparateurClient({
   legs,
   data,
@@ -1072,6 +1095,13 @@ function Deputes({ legs, data }: { legs: string[]; data: Record<string, LegData>
           orientOrder={orientOrder}
         />
       </div>
+      {a && b && a !== b && (
+        <PartageVisuel
+          href={`/comparateur/partage/deputes?leg=${encodeURIComponent(leg)}&a=${encodeURIComponent(
+            a,
+          )}&b=${encodeURIComponent(b)}`}
+        />
+      )}
       <p className="text-xs text-[var(--muted)]">
         Participation = votes exprimés / scrutins concernés. Loyauté = accord avec la position
         majoritaire de son groupe. Alignement présidentiel = accord avec la position majoritaire du
@@ -1091,6 +1121,7 @@ function Groupes({ legs, data }: { legs: string[]; data: Record<string, LegData>
     <div className="space-y-6">
       <LegTabs legs={legs} current={leg} onChange={setLeg} data={data} />
       <GroupeVsGroupe
+        leg={leg}
         positions={positions}
         accord={accord}
         deputes={deputes}
@@ -1132,12 +1163,14 @@ function moyennesGroupe(deputes: DeputeCompareC[]): Map<string, AggGroupe> {
 }
 
 function GroupeVsGroupe({
+  leg,
   positions,
   accord,
   deputes,
   orientGroupes,
   condamGroupes,
 }: {
+  leg: string;
   positions: GroupePositionC[];
   accord: { a: string; b: string; taux: number }[];
   deputes: DeputeCompareC[];
@@ -1222,6 +1255,15 @@ function GroupeVsGroupe({
         colorB={groupColor(b)}
         sujet="groupe"
       />
+      {a && b && a !== b && (
+        <div className="mt-6">
+          <PartageVisuel
+            href={`/comparateur/partage/groupes?leg=${encodeURIComponent(leg)}&a=${encodeURIComponent(
+              a,
+            )}&b=${encodeURIComponent(b)}`}
+          />
+        </div>
+      )}
     </div>
   );
 }
