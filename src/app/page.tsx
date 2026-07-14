@@ -4,6 +4,7 @@ import { stats, compositionActuelle, scrutins } from "@/lib/db";
 import { formatNumber, formatDate, sortBadge, groupBloc } from "@/lib/ui";
 import { GroupBadge, VoteBar, Hemicycle } from "@/components/bits";
 import { ScrutinCard } from "@/components/ScrutinCard";
+import { SITE_URL, SITE_NAME } from "@/lib/site";
 
 export const dynamic = "force-static";
 
@@ -86,8 +87,48 @@ export default function Home() {
     n: gs.filter((g) => groupBloc(g.abrege) === b.key).reduce((a, g) => a + (g.n ?? 0), 0),
   })).filter((b) => b.n > 0);
 
+  // Données structurées de la marque : aide Google à identifier le site (entité
+  // WebSite + Organization) et déclare l'URL de recherche (SearchAction pointant
+  // vers /scrutins?q=…, que la page /scrutins lit côté client).
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": `${SITE_URL}/#website`,
+        url: `${SITE_URL}/`,
+        name: SITE_NAME,
+        description:
+          "Explorez et comparez les scrutins, les votes, les députés et les groupes de l'Assemblée nationale française.",
+        inLanguage: "fr-FR",
+        publisher: { "@id": `${SITE_URL}/#organization` },
+        potentialAction: {
+          "@type": "SearchAction",
+          target: {
+            "@type": "EntryPoint",
+            urlTemplate: `${SITE_URL}/scrutins?q={search_term_string}`,
+          },
+          "query-input": "required name=search_term_string",
+        },
+      },
+      {
+        "@type": "Organization",
+        "@id": `${SITE_URL}/#organization`,
+        name: SITE_NAME,
+        url: `${SITE_URL}/`,
+        logo: `${SITE_URL}/icon.svg`,
+        description:
+          "QuiVoteQuoi rend lisibles les votes de l'Assemblée nationale à partir de données officielles et open sources.",
+      },
+    ],
+  };
+
   return (
     <div className="space-y-10">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
       <section className="space-y-5">
         <div className="max-w-2xl space-y-4">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">

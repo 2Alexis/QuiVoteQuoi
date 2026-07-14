@@ -52,6 +52,18 @@ export function ScrutinsClient({
     return () => clearTimeout(t);
   }, [q]);
 
+  // Pré-remplit la recherche depuis ?q= dans l'URL (ex. box de recherche Google via
+  // le SearchAction, ou lien direct partagé). Lu au montage côté client : la page
+  // serveur reste statique (ISR), aucun searchParam n'y est lu.
+  useEffect(() => {
+    const q0 = new URLSearchParams(window.location.search).get("q");
+    // Initialisation client-only depuis l'URL, volontairement après hydratation
+    // (l'initialiseur useState lirait `window` côté serveur → mismatch). Le setState
+    // synchrone est ici intentionnel et sans effet de cascade problématique.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (q0) setQ(q0);
+  }, []);
+
   // On saute le tout premier rendu : la page 1 par défaut est déjà pré-rendue.
   const didMount = useRef(false);
   useEffect(() => {
