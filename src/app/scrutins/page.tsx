@@ -3,12 +3,14 @@ import { ScrutinsClient } from "./ScrutinsClient";
 import type { Metadata } from "next";
 import { pageMeta } from "@/lib/site";
 
-// Page mise en cache (ISR) : plus de `force-dynamic`. On pré-rend la coquille + la
-// 1re page par défaut (lois, législature courante) → arrivée instantanée, sans
-// réveil à froid après inactivité. La liste pouvant compter des milliers de lignes,
-// on ne l'embarque pas côté client (contrairement à /deputes) : recherche, filtres
-// et pagination interrogent /api/scrutins, qui réutilise la même requête serveur.
-export const revalidate = 3600;
+// Page 100 % statique (générée au build, comme l'accueil). Les données sont figées
+// jusqu'au redéploiement nocturne, donc pas de `revalidate` : sinon la page serait
+// régénérée toutes les heures à l'exécution pour rien, et cette régénération (après
+// inactivité, plan gratuit) ralentissait les premières navigations. On pré-rend la
+// coquille + la 1re page par défaut ; la liste faisant des milliers de lignes, on ne
+// l'embarque pas côté client : recherche, filtres et pagination passent par
+// /api/scrutins (qui réutilise la même requête serveur).
+export const dynamic = "force-static";
 
 export const metadata: Metadata = pageMeta({
   title: "Scrutins",

@@ -6,11 +6,13 @@ import type { DeptAgg } from "@/components/FranceMap";
 import type { Metadata } from "next";
 import { pageMeta } from "@/lib/site";
 
-// Page mise en cache (ISR, régénérée en arrière-plan) : plus de `force-dynamic`.
-// On pré-rend la coquille + les données des législatures une fois ; recherche,
-// filtres, pagination et carte se font côté client. Servie depuis le cache statique
-// comme l'accueil, elle ne subit plus la latence de réveil à froid après inactivité.
-export const revalidate = 3600;
+// Page 100 % statique (générée au build, comme l'accueil). Les données sont figées
+// jusqu'au redéploiement nocturne : on évite donc `revalidate`, qui régénérerait la
+// page à l'exécution (requêtes sur la base de 221 Mo) toutes les heures pour rien —
+// et c'est précisément cette régénération qui, après inactivité sur le plan gratuit,
+// ralentissait les premières navigations. Coquille + données des législatures
+// pré-rendues une fois ; recherche, filtres, pagination et carte côté client.
+export const dynamic = "force-static";
 
 export const metadata: Metadata = pageMeta({
   title: "Députés",

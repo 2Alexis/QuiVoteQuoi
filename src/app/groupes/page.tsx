@@ -10,12 +10,12 @@ import { GroupesClient, type GroupesLegData } from "./GroupesClient";
 import type { Metadata } from "next";
 import { pageMeta } from "@/lib/site";
 
-// Page mise en cache (ISR, régénérée en arrière-plan) : plus de `force-dynamic`.
-// Les données sont figées jusqu'au prochain déploiement, donc on pré-rend la
-// coquille + les deux législatures une fois pour toutes ; le filtrage / le
-// basculement de législature se fait côté client. Résultat : servie depuis le
-// cache statique comme l'accueil, elle ne subit plus la latence de réveil à froid.
-export const revalidate = 3600;
+// Page 100 % statique (générée au build, comme l'accueil). Les données étant figées
+// jusqu'au prochain déploiement, `revalidate` ne ferait que régénérer la page à
+// l'exécution toutes les heures sans rien changer — et cette régénération, après
+// inactivité sur le plan gratuit, ralentissait les premières navigations. On pré-rend
+// donc la coquille + les deux législatures une fois ; filtrage et bascule côté client.
+export const dynamic = "force-static";
 
 export const metadata: Metadata = pageMeta({
   title: "Groupes parlementaires",
