@@ -64,8 +64,9 @@ export function groupBloc(
   // LFI-NFP (ordre 0) comprise : c'est la gauche, pas l'« extrême gauche ».
   if (o <= 3) return "gauche";
   if (o === 5 || o === 6 || o === 7) return "centre";
-  if (o === 8) return "droite";
-  if (o === 9 || o === 10) return "ext-droite";
+  // DR (8) et UDR — Union des droites pour la République (9) : la droite.
+  if (o === 8 || o === 9) return "droite";
+  if (o === 10) return "ext-droite"; // RN
   return "autre";
 }
 
