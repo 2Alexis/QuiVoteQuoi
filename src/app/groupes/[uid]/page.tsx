@@ -133,16 +133,6 @@ export default async function GroupeDetail({
             value={gstats.participation}
             hint="Part des scrutins où les membres ont voté, en moyenne"
           />
-          <MetricRing
-            label="Alignement présidentiel"
-            value={gstats.align}
-            hint="Vote comme le bloc présidentiel"
-          />
-          <MetricRing
-            label="Alignement (votes clivants)"
-            value={gstats.alignClivant}
-            hint="Hors votes quasi-unanimes"
-          />
         </section>
       )}
 
