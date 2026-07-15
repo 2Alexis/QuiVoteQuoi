@@ -14,7 +14,6 @@ export const metadata: Metadata = {
 };
 
 const BLOCS = [
-  { key: "ext-gauche", label: "Extrême gauche", color: "#7A0C1E" },
   { key: "gauche", label: "Gauche", color: "#C8102E" },
   { key: "centre", label: "Bloc central", color: "#E7A100" },
   { key: "droite", label: "Droite", color: "#2563AC" },

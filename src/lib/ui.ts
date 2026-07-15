@@ -59,9 +59,9 @@ export function groupOrder(abrege?: string | null): number {
 // Grand bloc politique d'un groupe (pour le résumé de composition).
 export function groupBloc(
   abrege?: string | null
-): "ext-gauche" | "gauche" | "centre" | "droite" | "ext-droite" | "autre" {
+): "gauche" | "centre" | "droite" | "ext-droite" | "autre" {
   const o = groupOrder(abrege);
-  if (o === 0) return "ext-gauche";
+  // LFI-NFP (ordre 0) comprise : c'est la gauche, pas l'« extrême gauche ».
   if (o <= 3) return "gauche";
   if (o === 5 || o === 6 || o === 7) return "centre";
   if (o === 8) return "droite";
