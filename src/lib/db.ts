@@ -1147,32 +1147,6 @@ export function accordsDuGroupe(uid: string, leg = DEFAULT_LEG): AccordGroupe[] 
     .all(leg, uid, leg) as AccordGroupe[];
 }
 
-// « Avec qui vote ce député » : pour chaque groupe (hors le sien), part des
-// scrutins où le vote du député coïncide avec la position majoritaire du groupe.
-// Révèle les coalitions réelles (avec qui il fait bloc, à qui il s'oppose), au
-// niveau individuel. Classé du plus proche au plus éloigné.
-export function accordsDuDepute(uid: string, leg = DEFAULT_LEG): AccordGroupe[] {
-  return db()
-    .prepare(
-      `SELECT o.uid uid, o.abrege abrege, o.libelle libelle,
-              CAST(SUM(v.position = sg.majorite) AS REAL) / COUNT(*) taux,
-              COUNT(*) n
-       FROM votes v
-       JOIN scrutin_groupe sg ON sg.scrutin_uid = v.scrutin_uid AND sg.legislature = ?
-       JOIN organes o ON o.uid = sg.groupe_uid
-       WHERE v.acteur_uid = ?
-         AND v.position IN ('pour','contre','abstention')
-         AND sg.majorite IN ('pour','contre','abstention')
-         AND o.code_type = 'GP'
-         AND sg.groupe_uid IN (SELECT groupe_uid FROM mandats WHERE legislature=? GROUP BY groupe_uid HAVING COUNT(*)>=3)
-         AND sg.groupe_uid <> COALESCE((SELECT groupe_uid FROM mandats WHERE uid=? AND legislature=? LIMIT 1), '')
-       GROUP BY o.uid
-       HAVING COUNT(*) >= 10
-       ORDER BY taux DESC`
-    )
-    .all(leg, uid, leg, uid, leg) as AccordGroupe[];
-}
-
 export interface AccordDeputes {
   commun: number; // scrutins où les DEUX se sont exprimés (pour/contre/abstention)
   accord: number; // parmi eux, ceux où ils ont voté dans le même sens

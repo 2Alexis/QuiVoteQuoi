@@ -406,9 +406,9 @@ export function GroupeAccords({
   return (
     <div className="space-y-3">
       <p className="text-xs leading-relaxed text-[var(--muted)]">
-        Part des scrutins où <b className="text-[var(--foreground)]">{me}</b>{" "}a voté dans le même
-        sens que la position majoritaire de chaque groupe. Taux élevé = ils votent ensemble ; taux
-        faible = ils s&apos;opposent.
+        Part des scrutins où <b className="text-[var(--foreground)]">{me}</b>{" "}a adopté la même
+        position majoritaire que chaque autre groupe. Taux élevé = les deux blocs votent ensemble ;
+        taux faible = ils s&apos;opposent.
       </p>
       <div className="space-y-2">
         {accords.map((a) => {
@@ -450,8 +450,8 @@ export function GroupeAccords({
             (≥ 60&nbsp;% de votes communs)
           </>
         )}
-        . À l&apos;inverse, l&apos;accord tombe à {pct(bottom.taux)} avec{" "}
-        <b className="text-[var(--foreground)]">{bottom.abrege}</b>.
+        . À l&apos;inverse, il ne rejoint <b className="text-[var(--foreground)]">{bottom.abrege}</b>{" "}
+        que {pct(bottom.taux)} du temps.
       </p>
     </div>
   );

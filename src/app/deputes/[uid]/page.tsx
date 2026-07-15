@@ -8,7 +8,6 @@ import {
   votesDuDepute,
   votesDuDeputeCount,
   votesDeputeParCategorie,
-  accordsDuDepute,
   condamnations,
 } from "@/lib/db";
 import { LEGISLATURE_LABEL, DEFAULT_LEG } from "@/lib/db";
@@ -21,7 +20,6 @@ import {
   OrientationPill,
   Condamnations,
   MetricRing,
-  GroupeAccords,
 } from "@/components/bits";
 import { ScrutinCard } from "@/components/ScrutinCard";
 import { ShareButtons } from "@/components/ShareButtons";
@@ -69,10 +67,6 @@ export default async function DeputeDetail({ params }: { params: Promise<{ uid: 
   const votesTotal = votesDuDeputeCount(uid);
   const parCategorie = votesDeputeParCategorie(uid);
   const condamne = condamnations(uid);
-  // « Avec qui vote ce député » par législature : co-vote avec chaque groupe (hors
-  // le sien) → révèle les coalitions réelles au niveau individuel.
-  const accordsByLeg: Record<string, ReturnType<typeof accordsDuDepute>> = {};
-  for (const s of stats) accordsByLeg[s.legislature] = accordsDuDepute(uid, s.legislature);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -152,22 +146,17 @@ export default async function DeputeDetail({ params }: { params: Promise<{ uid: 
                 value={s.loyaute}
                 hint={`Suit la position majoritaire de son groupe (${s.n_loyal}/${s.n_loyal_denom})`}
               />
+              <MetricRing
+                label="Alignement présidentiel"
+                value={s.align}
+                hint={`Vote comme le bloc présidentiel (${s.n_align}/${s.n_align_denom})`}
+              />
+              <MetricRing
+                label="Alignement (votes clivants)"
+                value={s.alignClivant}
+                hint={`Hors votes quasi-unanimes (${s.n_align_cliv}/${s.n_align_cliv_denom})`}
+              />
             </div>
-            {(accordsByLeg[s.legislature]?.length ?? 0) > 0 && (
-              <div className="card p-5">
-                <div className="mb-1 text-sm font-semibold">
-                  Avec qui vote {d.prenom} {d.nom} ?
-                </div>
-                <p className="mb-3 text-xs text-[var(--muted)]">
-                  Ses coalitions réelles : avec quels groupes il vote dans le même sens, au-delà du
-                  sien.
-                </p>
-                <GroupeAccords
-                  abrege={`${d.prenom} ${d.nom}`}
-                  accords={accordsByLeg[s.legislature]}
-                />
-              </div>
-            )}
             {(() => {
               const cats = parCategorie.filter((c) => c.legislature === s.legislature);
               if (cats.length === 0) return null;
