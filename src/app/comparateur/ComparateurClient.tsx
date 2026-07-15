@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { PRESIDENTS, dureeAnnees, type President } from "@/data/presidents";
-import { groupColor, groupOrder, ORIENTATION_POLES } from "@/lib/ui";
+import { groupColor, groupOrder, ORIENTATION_POLES, deputePhotoUrl } from "@/lib/ui";
 import { FIGURES_SET, normNom } from "@/lib/figures";
 import { MetricRing } from "@/components/bits";
+import { DeputePhoto } from "@/components/DeputePhoto";
+import { GroupLogo } from "@/components/GroupLogo";
 
 export interface DeputeCompareC {
   uid: string;
@@ -369,7 +371,7 @@ export default function ComparateurClient({
   data: Record<string, LegData>;
   now: number;
 }) {
-  const [tab, setTab] = useState<Tab>("presidents");
+  const [tab, setTab] = useState<Tab>("groupes");
 
   return (
     <div className="space-y-6">
@@ -384,9 +386,9 @@ export default function ComparateurClient({
       <div className="inline-flex overflow-hidden rounded-lg border border-[var(--border)] text-sm">
         {(
           [
-            ["presidents", "Présidents"],
-            ["deputes", "Députés"],
             ["groupes", "Groupes"],
+            ["deputes", "Députés"],
+            ["presidents", "Présidents"],
           ] as [Tab, string][]
         ).map(([t, label]) => (
           <button
@@ -542,11 +544,13 @@ interface AccordData {
 function FaceAFace({
   a,
   b,
+  leg,
   data,
   loading,
 }: {
   a: DeputeCompareC;
   b: DeputeCompareC;
+  leg: string;
   data: AccordData | null;
   loading: boolean;
 }) {
@@ -556,14 +560,21 @@ function FaceAFace({
   return (
     <div className="card p-5 text-center">
       <div className="text-xs uppercase tracking-wide text-[var(--muted)]">Accord de vote</div>
-      <div className="mt-1 flex flex-wrap items-center justify-center gap-y-0.5 text-sm font-semibold">
-        <span style={{ color: colorA }}>
-          {a.prenom} {a.nom}
-        </span>
-        <span className="mx-1.5 lowercase italic text-[var(--muted)]">vs</span>
-        <span style={{ color: colorB }}>
-          {b.prenom} {b.nom}
-        </span>
+      {/* Photos des deux députés, face à face */}
+      <div className="mt-3 flex items-start justify-center gap-4">
+        <div className="flex w-28 flex-col items-center gap-1.5">
+          <DeputePhoto src={deputePhotoUrl(a.uid, leg)} prenom={a.prenom} nom={a.nom} color={colorA} size={76} />
+          <span className="text-sm font-semibold leading-tight" style={{ color: colorA }}>
+            {a.prenom} {a.nom}
+          </span>
+        </div>
+        <span className="mt-7 lowercase italic text-[var(--muted)]">vs</span>
+        <div className="flex w-28 flex-col items-center gap-1.5">
+          <DeputePhoto src={deputePhotoUrl(b.uid, leg)} prenom={b.prenom} nom={b.nom} color={colorB} size={76} />
+          <span className="text-sm font-semibold leading-tight" style={{ color: colorB }}>
+            {b.prenom} {b.nom}
+          </span>
+        </div>
       </div>
 
       {loading ? (
@@ -1106,7 +1117,7 @@ function Deputes({ legs, data }: { legs: string[]; data: Record<string, LegData>
       </div>
 
       {dA && dB && a !== b && (
-        <FaceAFace a={dA} b={dB} data={accordData} loading={!accordPret} />
+        <FaceAFace a={dA} b={dB} leg={leg} data={accordData} loading={!accordPret} />
       )}
 
       {dA && dB && a !== b && (
@@ -1271,7 +1282,19 @@ function GroupeVsGroupe({
 
       <div className="mb-5 rounded-xl border border-[var(--border)] bg-[var(--background)] p-4 text-center">
         <div className="text-xs uppercase tracking-wide text-[var(--muted)]">Accord mutuel</div>
-        <div className="stat-num text-4xl font-bold">{taux == null ? "—" : pct(taux)}</div>
+        {/* Logos des deux groupes, face à face */}
+        <div className="mt-3 flex items-start justify-center gap-4">
+          <div className="flex flex-col items-center gap-1.5">
+            <GroupLogo abrege={a} libelle={gA?.libelle} size={60} />
+            <span className="text-sm font-semibold" style={{ color: colorA }}>{a}</span>
+          </div>
+          <span className="mt-6 lowercase italic text-[var(--muted)]">vs</span>
+          <div className="flex flex-col items-center gap-1.5">
+            <GroupLogo abrege={b} libelle={gB?.libelle} size={60} />
+            <span className="text-sm font-semibold" style={{ color: colorB }}>{b}</span>
+          </div>
+        </div>
+        <div className="stat-num mt-3 text-4xl font-bold">{taux == null ? "—" : pct(taux)}</div>
         <div className="mx-auto mb-1 mt-2 h-2 max-w-xs overflow-hidden rounded-full bg-[var(--border)]">
           <div
             className="h-full rounded-full"
