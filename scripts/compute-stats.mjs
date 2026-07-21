@@ -243,7 +243,7 @@ for (const leg of Object.keys(BLOC_PRESID)) {
 
 // ---- Catégorisation thématique des scrutins (heuristique par mots-clés) ----
 console.log("→ scrutins.categorie");
-const CATS = [
+export const CATS = [
   ["Santé", ["sante", "hopital", "hospital", "medic", "medecin", "soin", "soignant", "infirmier", "aide a mourir", "fin de vie", "soins palliatifs", "assurance maladie", "psychiatr", "vaccin", "epidemi", "pandemi", "addiction", "sanitaire", "cancer", "hopita", "tabac", "vapotage", "sage-femme", "infertilit", "fausse couche", "interruption spontanee de grossesse", "mortalite infantile", "orthophon", "cadmium", "maladi", "maladie", "cardio", "vasculair", "pathologi", "therapeutiq", "medical", "patient", "soigner", "ordonnance"]],
   ["Social", ["securite sociale", "retraite", "retraites", "handicap", "dependance", "autonomie", "solidarite", "pauvrete", "precarite", "allocation", "prestation", "ehpad", "aidant", "invalidite", "minima sociaux", "rsa", "revenu de solidarite", "bien vieillir", "grand age", "vieilli", "protection sociale", "aide sociale", "affaires sociales", "action sociale", "mediation sociale", "insertion", "sans-abri", "hebergement d urgence", "pension"]],
   ["Budget & fiscalité", ["loi de finances", "de finances pour", "budget", "fiscal", "impot", "taxe", "recettes", "douane", "dette", "credit d impot", "tva", "cotisation", "approbation des comptes", "loi de reglement", "resultats de la gestion", "programmation des finances", "depense publique", "de fin de gestion"]],
@@ -255,7 +255,7 @@ const CATS = [
   ["Éducation & culture", ["education", "ecole", "enseignement", "universite", "recherche", "culture", "sport", "jeunesse", "patrimoine", "audiovisuel", "numerique", "etudiant", "olympique", "scolaire", "restes humains", "collections publiques", "droits voisins", "agence de presse", "classes de decouverte"]],
   ["Société", ["egalite", "discrimination", "femmes", "laicite", "bioethique", "famille", "logement", "locatif", "loyer", "bail", "locataire", "urbanisme", "transport", "mobilite", "routier", "ferroviaire", "metropolitain", "animaux", "religion", "enfant", "mineur", "creche", "conjugal", "benevole", "associatif", "vie associative", "permis de conduire", "animal", "plui", "code noir", "homosexualite", "ascenseur", "ascenceur", "moniteurs de ski", "chien"]],
 ];
-const normTxt = (s) =>
+export const normTxt = (s) =>
   (s || "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -263,7 +263,7 @@ const normTxt = (s) =>
     .replace(/['’‘`´]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-function classify(t) {
+export function classify(t) {
   const s = normTxt(t);
   let best = "Autre";
   let bs = 0;

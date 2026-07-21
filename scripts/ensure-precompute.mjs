@@ -9,6 +9,7 @@
 // opération idempotente et peu coûteuse — pour rendre le déploiement autonome.
 import Database from "better-sqlite3";
 import path from "node:path";
+import { classify } from "./compute-stats.mjs";
 
 const DEST = process.env.DATABASE_PATH || path.join(process.cwd(), "data", "hemicycle.db");
 const db = new Database(DEST); // lecture/écriture (au build, le fichier est modifiable)
@@ -19,7 +20,7 @@ const has = db
 
 if (has) {
   const { n } = db.prepare("SELECT COUNT(*) n FROM acteur_last_vote").get();
-  console.log(`acteur_last_vote déjà présente (${n} lignes) — rien à faire.`);
+  console.log(`acteur_last_vote déjà présente (${n} lignes).`);
 } else {
   console.log("acteur_last_vote absente — construction…");
   const t0 = Date.now();
@@ -34,4 +35,16 @@ if (has) {
   const { n } = db.prepare("SELECT COUNT(*) n FROM acteur_last_vote").get();
   console.log(`OK : ${n} lignes en ${((Date.now() - t0) / 1000).toFixed(1)} s.`);
 }
+
+// Recatégorisation à la volée des scrutins selon les règles à jour de compute-stats
+console.log("Recatégorisation des scrutins au build...");
+const t1 = Date.now();
+const rows = db.prepare("SELECT uid, COALESCE(titre, objet, '') t FROM scrutins").all();
+const upd = db.prepare("UPDATE scrutins SET categorie=? WHERE uid=?");
+const tx = db.transaction(() => {
+  for (const r of rows) upd.run(classify(r.t), r.uid);
+});
+tx();
+console.log(`Recatégorisation terminée en ${((Date.now() - t1) / 1000).toFixed(2)} s.`);
+
 db.close();
