@@ -4,7 +4,7 @@
 //   Acteurs   : /{leg}/amo/deputes_actifs_mandats_actifs_organes/AMO10_....json.zip (actifs)
 //   Historique: /{leg}/amo/tous_acteurs_mandats_organes_xi_legislature/AMO30_....json.zip
 import { createRequire } from "node:module";
-import { mkdirSync, existsSync, createWriteStream } from "node:fs";
+import { mkdirSync, existsSync, createWriteStream, unlinkSync, renameSync, statSync } from "node:fs";
 import { pipeline } from "node:stream/promises";
 import path from "node:path";
 const require = createRequire(import.meta.url);
@@ -31,19 +31,47 @@ const num = (x) => {
   return Number.isFinite(n) ? n : null;
 };
 
-async function download(url, dest) {
+async function download(url, dest, maxRetries = 3) {
   if (existsSync(dest)) {
-    console.log("  (cache) " + path.basename(dest));
-    return dest;
+    try {
+      const stats = statSync(dest);
+      if (stats.size > 0) {
+        console.log("  (cache) " + path.basename(dest));
+        return dest;
+      }
+    } catch {
+      // Ignorer si problème de lecture stat
+    }
   }
-  console.log("  download " + url);
-  const res = await fetch(url);
-  if (!res.ok) {
-    console.warn(`  !! HTTP ${res.status} pour ${url}`);
-    return null;
+
+  const tmpDest = `${dest}.tmp`;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`  download ${url}${attempt > 1 ? ` (tentative ${attempt}/${maxRetries})` : ""}`);
+      const res = await fetch(url);
+      if (!res.ok) {
+        console.warn(`  !! HTTP ${res.status} pour ${url}`);
+        if (attempt === maxRetries) return null;
+        await new Promise((r) => setTimeout(r, 2000 * attempt));
+        continue;
+      }
+
+      await pipeline(res.body, createWriteStream(tmpDest));
+      renameSync(tmpDest, dest);
+      return dest;
+    } catch (err) {
+      console.warn(`  !! Erreur téléchargement (tentative ${attempt}/${maxRetries}) : ${err.message}`);
+      if (existsSync(tmpDest)) {
+        try { unlinkSync(tmpDest); } catch {}
+      }
+      if (attempt === maxRetries) {
+        throw err;
+      }
+      await new Promise((r) => setTimeout(r, 3000 * attempt));
+    }
   }
-  await pipeline(res.body, createWriteStream(dest));
-  return dest;
+  return null;
 }
 
 function initDb(db) {

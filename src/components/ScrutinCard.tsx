@@ -1,5 +1,5 @@
 import type { ElementType } from "react";
-import { parseScrutin, type ScrutinType } from "@/lib/parseScrutin";
+import { parseScrutin, cleanDescription, type ScrutinType } from "@/lib/parseScrutin";
 
 // Couleur de repère par type de scrutin (même langage visuel que les pills du
 // projet : teinte pleine sur fond translucide `${couleur}1a`).
@@ -12,13 +12,8 @@ const TYPE_COLOR: Record<ScrutinType, string> = {
 };
 
 // Carte de scrutin : remplace le pavé de titre brut par une hiérarchie lisible
-// — un badge pour le type, l'intitulé de la loi en grand, les détails techniques
-// (action, auteur, n° d'amendement) en secondaire italique.
-//
-// Sémantique volontairement sobre : un élément de titre (`as`) pour la loi, un
-// `<p>` pour les détails, des `<span>` frères pour les étiquettes. Aucun
-// attribut `title` (non restitué par les lecteurs d'écran) : toute l'information
-// est portée par du texte visible.
+// — un badge pour le type, l'intitulé de la loi en grand, et une courte description
+// ou les détails techniques (action, auteur, n° d'amendement) en secondaire italique sur 1 ligne.
 export function ScrutinCard({
   titre,
   as: Heading = "h3" as ElementType,
@@ -37,17 +32,18 @@ export function ScrutinCard({
   // Intitulé principal : la loi si elle est identifiée, sinon l'action (cas des
   // motions de censure, sans texte associé), sinon le titre brut en dernier recours.
   const principal = p.loi ?? p.action ?? titre ?? "Scrutin";
+  const desc = cleanDescription(titre);
 
-  // Ligne de détails techniques. Quand la loi occupe le titre, on y met l'action ;
-  // sinon (motion) on ne répète pas l'action et on donne l'auteur / les cosignataires.
+  // Ligne de détails techniques / description. Quand c'est un vote sur l'ensemble d'un texte,
+  // on remplace "Vote sur l'ensemble du texte" par la description de la loi (tronquée sur 1 ligne).
   const details = (
     p.loi
       ? [
-          p.action,
+          p.action === "Vote sur l'ensemble du texte" ? desc : p.action,
           p.meta.auteur,
           p.meta.numeroAmendement ? `amendement n° ${p.meta.numeroAmendement}` : null,
         ]
-      : [p.meta.auteur, p.meta.cosignataires ? `${p.meta.cosignataires} cosignataires` : null]
+      : [desc ?? p.meta.auteur, p.meta.cosignataires ? `${p.meta.cosignataires} cosignataires` : null]
   )
     .filter(Boolean)
     .join(" · ");
@@ -73,7 +69,11 @@ export function ScrutinCard({
 
       <Heading className={`mt-1 ${titleCls}`}>{principal}</Heading>
 
-      {details ? <p className="mt-0.5 text-sm italic text-[var(--muted)]">{details}</p> : null}
+      {details ? (
+        <p className="mt-0.5 text-sm italic text-[var(--muted)] truncate" title={details}>
+          {details}
+        </p>
+      ) : null}
     </div>
   );
 }

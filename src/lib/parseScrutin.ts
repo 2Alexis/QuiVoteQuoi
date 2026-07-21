@@ -33,6 +33,19 @@ export interface ParsedScrutin {
   meta: ScrutinMeta;
 }
 
+/**
+ * Nettoie le titre brut ou l'objet d'un scrutin pour en faire une description textuelle complète et lisible.
+ * Exemple: "l'ensemble du projet de loi..." -> "Projet de loi..."
+ */
+export function cleanDescription(titre: string | null | undefined): string | null {
+  if (!titre) return null;
+  let s = titre.trim().replace(/\s+/g, " ");
+  s = s.replace(/^l['’]ensemble\s+(?:du|de\s+la|des)\s+/i, "");
+  s = s.replace(/^(?:l['’]|le\s+|la\s+|les\s+)/i, "");
+  if (!s) return null;
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 // Apostrophes droite ' et typographique ' traitées indifféremment.
 const AP = "['’]";
 

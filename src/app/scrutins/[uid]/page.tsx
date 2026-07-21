@@ -5,7 +5,7 @@ import { formatDate, sortBadge, POSITION_COLOR, scrutinUrlOfficiel } from "@/lib
 import { GroupBadge, VoteBar, CategoriePill, OrientationPill, HemicycleVote } from "@/components/bits";
 import { ScrutinCard } from "@/components/ScrutinCard";
 import { ShareButtons } from "@/components/ShareButtons";
-import { parseScrutin } from "@/lib/parseScrutin";
+import { parseScrutin, cleanDescription } from "@/lib/parseScrutin";
 import { pageMeta } from "@/lib/site";
 import type { Metadata } from "next";
 
@@ -49,6 +49,7 @@ export default async function ScrutinDetail({ params }: { params: Promise<{ uid:
   const vent = ventilationScrutin(uid);
   const nominatifs = votesNominatifsScrutin(uid);
   const b = sortBadge(sc.sort_code);
+  const fullDescription = cleanDescription(sc.titre || sc.objet);
 
   const byDep = new Map(nominatifs.map((n) => [n.acteur_uid, n]));
   void byDep;
@@ -113,6 +114,18 @@ export default async function ScrutinDetail({ params }: { params: Promise<{ uid:
             score={sc.orientation_score}
           />
         </div>
+
+        {fullDescription && (
+          <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
+              Description / Objet du texte
+            </h2>
+            <p className="mt-1 text-sm leading-relaxed text-[var(--foreground)]">
+              {fullDescription}
+            </p>
+          </div>
+        )}
+
         <a
           href={scrutinUrlOfficiel(sc.legislature, sc.numero)}
           target="_blank"
