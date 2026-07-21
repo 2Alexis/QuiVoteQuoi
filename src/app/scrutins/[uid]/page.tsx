@@ -5,7 +5,8 @@ import { formatDate, sortBadge, POSITION_COLOR, scrutinUrlOfficiel } from "@/lib
 import { GroupBadge, VoteBar, CategoriePill, OrientationPill, HemicycleVote } from "@/components/bits";
 import { ScrutinCard } from "@/components/ScrutinCard";
 import { ShareButtons } from "@/components/ShareButtons";
-import { parseScrutin, cleanDescription } from "@/lib/parseScrutin";
+import { parseScrutin } from "@/lib/parseScrutin";
+import { getScrutinSummary } from "@/lib/scrutinSummary";
 import { pageMeta } from "@/lib/site";
 import type { Metadata } from "next";
 
@@ -49,7 +50,7 @@ export default async function ScrutinDetail({ params }: { params: Promise<{ uid:
   const vent = ventilationScrutin(uid);
   const nominatifs = votesNominatifsScrutin(uid);
   const b = sortBadge(sc.sort_code);
-  const fullDescription = cleanDescription(sc.titre || sc.objet);
+  const summary = getScrutinSummary(sc);
 
   const byDep = new Map(nominatifs.map((n) => [n.acteur_uid, n]));
   void byDep;
@@ -115,13 +116,23 @@ export default async function ScrutinDetail({ params }: { params: Promise<{ uid:
           />
         </div>
 
-        {fullDescription && (
-          <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
-              Description / Objet du texte
-            </h2>
-            <p className="mt-1 text-sm leading-relaxed text-[var(--foreground)]">
-              {fullDescription}
+        {summary && (
+          <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border)] pb-2">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
+                Description & Contexte du texte
+              </h2>
+              <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--muted)] font-medium">
+                <span className="rounded-md bg-[var(--background)] px-2 py-0.5 border border-[var(--border)]">
+                  {summary.nature}
+                </span>
+                <span className="rounded-md bg-[var(--background)] px-2 py-0.5 border border-[var(--border)]">
+                  {summary.etape}
+                </span>
+              </div>
+            </div>
+            <p className="text-sm leading-relaxed text-[var(--foreground)] font-normal">
+              {summary.description}
             </p>
           </div>
         )}

@@ -1,5 +1,5 @@
 import type { ElementType } from "react";
-import { parseScrutin, cleanDescription, type ScrutinType } from "@/lib/parseScrutin";
+import { parseScrutin, type ScrutinType } from "@/lib/parseScrutin";
 
 // Couleur de repère par type de scrutin (même langage visuel que les pills du
 // projet : teinte pleine sur fond translucide `${couleur}1a`).
@@ -12,8 +12,8 @@ const TYPE_COLOR: Record<ScrutinType, string> = {
 };
 
 // Carte de scrutin : remplace le pavé de titre brut par une hiérarchie lisible
-// — un badge pour le type, l'intitulé de la loi en grand, et une courte description
-// ou les détails techniques (action, auteur, n° d'amendement) en secondaire italique sur 1 ligne.
+// — un badge pour le type, l'intitulé de la loi en grand, et la nature du texte
+// / détails techniques (action, auteur, n° d'amendement) en secondaire italique.
 export function ScrutinCard({
   titre,
   as: Heading = "h3" as ElementType,
@@ -32,18 +32,23 @@ export function ScrutinCard({
   // Intitulé principal : la loi si elle est identifiée, sinon l'action (cas des
   // motions de censure, sans texte associé), sinon le titre brut en dernier recours.
   const principal = p.loi ?? p.action ?? titre ?? "Scrutin";
-  const desc = cleanDescription(titre);
 
-  // Ligne de détails techniques / description. Quand c'est un vote sur l'ensemble d'un texte,
-  // on remplace "Vote sur l'ensemble du texte" par la description de la loi (tronquée sur 1 ligne).
+  // Ligne de détails sous le titre. Quand l'intitulé principal est déjà le nom de la loi,
+  // on affiche la nature du texte (ex. "Projet de loi") au lieu de répéter inutilement le titre.
   const details = (
     p.loi
       ? [
-          p.action === "Vote sur l'ensemble du texte" ? desc : p.action,
+          p.action === "Vote sur l'ensemble du texte"
+            ? (p.meta.typeTexte ?? "Vote sur l'ensemble du texte")
+            : p.action,
           p.meta.auteur,
           p.meta.numeroAmendement ? `amendement n° ${p.meta.numeroAmendement}` : null,
         ]
-      : [desc ?? p.meta.auteur, p.meta.cosignataires ? `${p.meta.cosignataires} cosignataires` : null]
+      : [
+          p.action ?? p.meta.typeTexte,
+          p.meta.auteur,
+          p.meta.cosignataires ? `${p.meta.cosignataires} cosignataires` : null,
+        ]
   )
     .filter(Boolean)
     .join(" · ");
