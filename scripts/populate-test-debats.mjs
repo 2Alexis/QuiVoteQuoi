@@ -4,7 +4,7 @@ import path from "node:path";
 const DEST = process.env.DATABASE_PATH || path.join(process.cwd(), "data", "hemicycle.db");
 const db = new Database(DEST);
 
-// 1. S'assurer que les tables existent et ont la bonne structure
+// 1. S'assurer que la table scrutin_debats existe
 db.exec(`
   CREATE TABLE IF NOT EXISTS scrutin_debats (
     scrutin_uid TEXT PRIMARY KEY,
@@ -28,74 +28,9 @@ if (!columns.some(col => col.name === "contexte_auteur")) {
   db.exec("ALTER TABLE scrutin_debats ADD COLUMN contexte_auteur TEXT;");
 }
 
-// Insérer les scrutins manquants dans la table 'scrutins' pour la navigation et l'affichage complet
-const insertScrutin = db.prepare(`
-  INSERT INTO scrutins (
-    uid, numero, date, legislature, type_vote, sort_code, titre, objet, demandeur,
-    nb_votants, exprimes, pour, contre, abstentions, non_votants, categorie, orientation, orientation_score, orientation_src
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  ON CONFLICT(uid) DO UPDATE SET
-    numero = excluded.numero,
-    date = excluded.date,
-    legislature = excluded.legislature,
-    type_vote = excluded.type_vote,
-    sort_code = excluded.sort_code,
-    titre = excluded.titre,
-    objet = excluded.objet,
-    pour = excluded.pour,
-    contre = excluded.contre,
-    abstentions = excluded.abstentions
-`);
+console.log("Table scrutin_debats prête.");
 
-// Scrutin 8430
-insertScrutin.run(
-  "VTANR5L17V8430",
-  8430,
-  "2026-07-20",
-  "17",
-  "scrutin public",
-  "adopté",
-  "l'ensemble de la proposition de loi visant à assurer le droit de chaque enfant à être assisté d'un avocat dans le cadre d'une mesure d'assistance éducative et de protection de l'enfance (deuxième lecture).",
-  "l'ensemble de la proposition de loi visant à assurer le droit de chaque enfant à être assisté d'un avocat dans le cadre d'une mesure d'assistance éducative et de protection de l'enfance (deuxième lecture).",
-  "Conférence des Présidents",
-  467,
-  462,
-  450,
-  12,
-  5,
-  1,
-  "Famille & société",
-  "Droits des mineurs",
-  -0.65,
-  "votes"
-);
-
-// Scrutin 8280
-insertScrutin.run(
-  "VTANR5L17V8280",
-  8280,
-  "2026-07-15",
-  "17",
-  "scrutin public",
-  "adopté",
-  "l'ensemble de la proposition de loi relative au droit à l'aide à mourir (première lecture).",
-  "l'ensemble de la proposition de loi relative au droit à l'aide à mourir (première lecture).",
-  "Conférence des Présidents",
-  545,
-  530,
-  320,
-  210,
-  15,
-  2,
-  "Santé & social",
-  "Bioéthique",
-  -0.45,
-  "votes"
-);
-
-console.log("Scrutins de test (8430 et 8280) insérés dans la table `scrutins`.");
-
-// 2. Insérer les résumés de débats formatés selon AGENTS.md
+// 2. Insérer/remplacer uniquement les résumés de débats (sans toucher à la table 'scrutins' !)
 const insertDebat = db.prepare(`
   INSERT OR REPLACE INTO scrutin_debats (
     scrutin_uid, arguments_pour, arguments_contre,
@@ -104,28 +39,28 @@ const insertDebat = db.prepare(`
   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
 `);
 
-// Résumé pour Scrutin 8430
+// Résumé pour Scrutin 8430 (Protection des enfants)
 insertDebat.run(
   "VTANR5L17V8430",
   JSON.stringify([
-    "Selon la rapporteure Émilie Chandler, cette mesure garantit la parole de l'enfant de manière autonome, en évitant toute influence ou conflit d'intérêts avec les représentants légaux.",
-    "D'après le groupe LFI-NFP, la présence systématique d'un avocat qualifié renforce les droits fondamentaux des mineurs face aux décisions d'assistance éducative.",
-    "Le groupe SOC soutient que cette assistance juridique gratuite contribue à réduire les inégalités d'accès à la justice pour les enfants les plus vulnérables."
+    "Selon la rapporteure Émilie Chandler, ce projet de loi apporte des garanties indispensables pour harmoniser les dispositifs de signalement des violences et mieux protéger l'enfance en danger.",
+    "D'après le groupe LFI-NFP, les mesures de suivi et d'accompagnement des mineurs placés doivent être assorties de moyens humains et budgétaires à la hauteur de l'urgence sociale.",
+    "Le groupe SOC soutient que le renforcement de la coordination des acteurs de la protection de l'enfance permettra de prévenir plus efficacement les drames intrafamiliaux."
   ]),
   JSON.stringify([
-    "Selon le groupe RN, l'automatisation de la présence d'un avocat risque d'allonger les délais de procédure déjà critiques dans les tribunaux pour enfants.",
-    "D'après le groupe DR, l'absence de formation spécialisée obligatoire de certains avocats commis d'office pourrait nuire à la qualité de l'accompagnement du mineur.",
-    "Le groupe UDR s'oppose car cette mesure engendre un coût budgétaire conséquent pour l'aide juridictionnelle sans garantie d'une meilleure efficacité éducative."
+    "Selon le groupe RN, ce texte élude la crise structurelle des foyers de l'enfance et des structures d'accueil qui manquent cruellement de places.",
+    "D'après le groupe DR, certaines dispositions augmentent de manière disproportionnée la responsabilité pénale et administrative des éducateurs et travailleurs sociaux.",
+    "Le groupe UDR s'oppose car cette centralisation des compétences risque de priver les départements de leur autonomie historique en matière d'action sociale."
   ]),
-  "L'avocat de l'enfant n'est pas là pour juger les parents, mais pour s'assurer que l'intérêt supérieur du mineur soit la boussole de notre justice.",
+  "La protection de l'enfance n'est pas un sujet partisan, c'est un devoir moral pour lequel notre République doit déployer tous ses moyens.",
   "Émilie Chandler",
   "EPR",
-  "Cette proposition de loi vise à instaurer le droit pour tout enfant d'être assisté d'un avocat lors des procédures d'assistance éducative devant le juge des enfants.",
-  "Déposée par la députée Émilie Chandler (groupe EPR)",
+  "Ce projet de loi relatif à la protection des enfants vise à renforcer le cadre de protection de l'enfance, le signalement des violences et l'accompagnement des mineurs.",
+  "Gouvernement",
   "https://www.assemblee-nationale.fr/dyn/17/dossiers/alt/VTANR5L17V8430"
 );
 
-// Résumé pour Scrutin 7987
+// Résumé pour Scrutin 7987 (Présomption de légitime défense)
 insertDebat.run(
   "VTANR5L17V7987",
   JSON.stringify([
@@ -146,7 +81,7 @@ insertDebat.run(
   "https://www.assemblee-nationale.fr/dyn/17/dossiers/alt/VTANR5L17V7987"
 );
 
-// Résumé pour Scrutin 8280
+// Résumé pour Scrutin 8280 (Aide à mourir)
 insertDebat.run(
   "VTANR5L17V8280",
   JSON.stringify([
@@ -162,12 +97,12 @@ insertDebat.run(
   "Ce texte n'impose rien à personne, il offre simplement un droit ultime de dignité et de liberté à ceux dont la souffrance est devenue insupportable.",
   "Olivier Falorni",
   "Dem",
-  "Ce projet de loi définit les conditions d'accès, les critères médicaux stricts et les garanties entourant le droit à l'aide active à mourir en France.",
-  "Déposé par le Gouvernement",
+  "Cette proposition de loi définit le cadre légal et les conditions médicales d'accès à l'aide active à mourir en France.",
+  "Déposée par le député Olivier Falorni et des membres du groupe Les Démocrates",
   "https://www.assemblee-nationale.fr/dyn/17/dossiers/alt/VTANR5L17V8280"
 );
 
-console.log("Résumés des débats insérés pour les scrutins 8430, 7987, 8280.");
+console.log("Résumés des débats insérés avec succès pour les scrutins 8430, 7987, 8280 sans altérer les votes réels.");
 
 db.close();
 console.log("Terminé.");
