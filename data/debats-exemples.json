@@ -1,0 +1,65 @@
+{
+  "VTANR5L17V8430": {
+    "contexte": {
+      "description": "Cette proposition de loi vise à instaurer le droit pour tout enfant d'être assisté d'un avocat lors des procédures d'assistance éducative devant le juge des enfants.",
+      "auteur": "Déposée par la députée Émilie Chandler (groupe EPR)"
+    },
+    "arguments_pour": [
+      "Selon la rapporteure Émilie Chandler, cette mesure garantit la parole de l'enfant de manière autonome, en évitant toute influence ou conflit d'intérêts avec les représentants légaux.",
+      "D'après le groupe LFI-NFP, la présence systématique d'un avocat qualifié renforce les droits fondamentaux des mineurs face aux décisions d'assistance éducative.",
+      "Le groupe SOC soutient que cette assistance juridique gratuite contribue à réduire les inégalités d'accès à la justice pour les enfants les plus vulnérables."
+    ],
+    "arguments_contre": [
+      "Selon le groupe RN, l'automatisation de la présence d'un avocat risque d'allonger les délais de procédure déjà critiques dans les tribunaux pour enfants.",
+      "D'après le groupe DR, l'absence de formation spécialisée obligatoire de certains avocats commis d'office pourrait nuire à la qualité de l'accompagnement du mineur.",
+      "Le groupe UDR s'oppose car cette mesure engendre un coût budgétaire conséquent pour l'aide juridictionnelle sans garantie d'une meilleure efficacité éducative."
+    ],
+    "citation_marquante": {
+      "orateur": "Émilie Chandler",
+      "groupe": "EPR",
+      "texte": "L'avocat de l'enfant n'est pas là pour juger les parents, mais pour s'assurer que l'intérêt supérieur du mineur soit la boussole de notre justice."
+    }
+  },
+  "VTANR5L17V7987": {
+    "contexte": {
+      "description": "Cette proposition de loi vise à instaurer une présomption de légitime défense pour les membres des forces de l'ordre lorsqu'ils font usage de leurs armes dans l'exercice de leurs fonctions.",
+      "auteur": "Déposée par le groupe Rassemblement National"
+    },
+    "arguments_pour": [
+      "Selon le groupe RN, cette mesure protège juridiquement et moralement les policiers et gendarmes confrontés à une hausse des agressions physiques et refus d'obtempérer.",
+      "D'après le député Thomas Ménagé, il est indispensable d'inverser la charge de la preuve pour que les forces de l'ordre ne soient pas présumées coupables d'emblée.",
+      "Le groupe UDR soutient que cette réforme redonne de l'autorité à l'État et renforce le pouvoir de dissuasion des forces de sécurité intérieure."
+    ],
+    "arguments_contre": [
+      "Selon le groupe LFI-NFP, instaurer une telle présomption crée un permis de tuer de fait et risque d'accroître de manière dramatique les violences policières.",
+      "D'après le ministre de l'Intérieur, le cadre actuel de la légitime défense réformé en 2017 est suffisant, équilibré et protecteur pour les policiers.",
+      "Le groupe EcoS s'oppose car cette mesure rompt l'égalité des citoyens devant la loi et contredit les principes fondamentaux de la proportionnalité de la force."
+    ],
+    "citation_marquante": {
+      "orateur": "Thomas Ménagé",
+      "groupe": "RN",
+      "texte": "Nos policiers risquent leur vie chaque jour pour notre sécurité; la moindre des choses est que la loi se place à leurs côtés et non contre eux."
+    }
+  },
+  "VTANR5L17V8280": {
+    "contexte": {
+      "description": "Ce projet de loi définit les conditions d'accès, les critères médicaux stricts et les garanties entourant le droit à l'aide active à mourir en France.",
+      "auteur": "Déposé par le Gouvernement"
+    },
+    "arguments_pour": [
+      "Selon le Gouvernement, cette loi d'éthique et de fraternité répond à la souffrance des malades en fin de vie en leur offrant une liberté ultime dans le respect de leur volonté.",
+      "D'après le groupe EPR, le texte comporte des garde-fous extrêmement précis, réservant l'aide à mourir aux patients atteints d'une affection incurable à court ou moyen terme.",
+      "Le groupe LFI-NFP soutient que cette mesure consacre un nouveau droit civil garantissant la dignité humaine face à la maladie et aux traitements devenus inutiles."
+    ],
+    "arguments_contre": [
+      "Selon le groupe RN, le projet de loi élude le manque criant de moyens alloués aux soins palliatifs sur l'ensemble du territoire national.",
+      "D'après le groupe DR, l'aide active à mourir contredit le serment d'Hippocrate et risque de faire peser une pression intolérable sur les soignants et les personnes âgées.",
+      "Le groupe UDR s'oppose car l'acte d'abréger la vie ne saurait être qualifié de soin ou de geste de solidarité nationale."
+    ],
+    "citation_marquante": {
+      "orateur": "Olivier Falorni",
+      "groupe": "Dem",
+      "texte": "Ce texte n'impose rien à personne, il offre simplement un droit ultime de dignité et de liberté à ceux dont la souffrance est devenue insupportable."
+    }
+  }
+}

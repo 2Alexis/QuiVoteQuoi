@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { scrutin, ventilationScrutin, votesNominatifsScrutin } from "@/lib/db";
+import { scrutin, ventilationScrutin, votesNominatifsScrutin, debatScrutin } from "@/lib/db";
 import { formatDate, sortBadge, POSITION_COLOR, scrutinUrlOfficiel } from "@/lib/ui";
 import { GroupBadge, VoteBar, CategoriePill, OrientationPill, HemicycleVote } from "@/components/bits";
 import { ScrutinCard } from "@/components/ScrutinCard";
 import { ShareButtons } from "@/components/ShareButtons";
+import { DebatsSummary } from "@/components/DebatsSummary";
 import { parseScrutin } from "@/lib/parseScrutin";
 import { getScrutinSummary } from "@/lib/scrutinSummary";
 import { pageMeta } from "@/lib/site";
@@ -49,6 +50,7 @@ export default async function ScrutinDetail({ params }: { params: Promise<{ uid:
   if (!sc) notFound();
   const vent = ventilationScrutin(uid);
   const nominatifs = votesNominatifsScrutin(uid);
+  const debats = debatScrutin(uid);
   const b = sortBadge(sc.sort_code);
   const summary = getScrutinSummary(sc);
 
@@ -217,6 +219,8 @@ export default async function ScrutinDetail({ params }: { params: Promise<{ uid:
           )}
         </div>
       </section>
+
+      <DebatsSummary initialSummary={debats} scrutinUid={uid} />
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Votes nominatifs</h2>

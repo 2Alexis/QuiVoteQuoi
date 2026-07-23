@@ -10,9 +10,10 @@
     "ingest": "node scripts/ingest.mjs",
     "postingest": "node scripts/compute-stats.mjs",
     "stats": "node scripts/compute-stats.mjs",
-    "db:build": "node scripts/ingest.mjs && node scripts/compute-stats.mjs && node scripts/fetch-condamnations.mjs && node scripts/add-profession-cat.mjs",
+    "db:build": "node scripts/ingest.mjs && node scripts/compute-stats.mjs && node scripts/fetch-condamnations.mjs && node scripts/add-profession-cat.mjs && node scripts/fetch-debats-llm.mjs",
     "db:fetch": "node scripts/fetch-db.mjs",
-    "db:prepare": "node scripts/ensure-precompute.mjs"
+    "db:prepare": "node scripts/ensure-precompute.mjs && node scripts/populate-test-debats.mjs",
+    "db:debats": "node scripts/fetch-debats-llm.mjs"
   },
   "engines": {
     "node": ">=22 <25"

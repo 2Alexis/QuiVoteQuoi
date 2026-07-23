@@ -1205,3 +1205,70 @@ export function sitemapGroupes(): { uid: string }[] {
     )
     .all() as { uid: string }[];
 }
+
+// --- Résumé des Débats Parlementaires (LLM / Open Data) ---
+export interface DebatSummary {
+  scrutin_uid: string;
+  arguments_pour: string[];
+  arguments_contre: string[];
+  citation: {
+    texte: string;
+    orateur: string;
+    parti: string;
+  };
+  contexte?: {
+    description: string;
+    auteur: string;
+  } | null;
+  source_url?: string | null;
+  updated_at?: string;
+}
+
+export function debatScrutin(scrutinUid: string): DebatSummary | null {
+  const has = db()
+    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='scrutin_debats'")
+    .get();
+  if (!has) return null;
+  const row = db()
+    .prepare("SELECT * FROM scrutin_debats WHERE scrutin_uid = ?")
+    .get(scrutinUid) as
+    | {
+        scrutin_uid: string;
+        arguments_pour: string;
+        arguments_contre: string;
+        citation_texte: string;
+        citation_orateur: string;
+        citation_parti: string;
+        contexte_description?: string | null;
+        contexte_auteur?: string | null;
+        source_url: string | null;
+        updated_at?: string;
+      }
+    | undefined;
+
+  if (!row) return null;
+
+  try {
+    return {
+      scrutin_uid: row.scrutin_uid,
+      arguments_pour: JSON.parse(row.arguments_pour || "[]"),
+      arguments_contre: JSON.parse(row.arguments_contre || "[]"),
+      citation: {
+        texte: row.citation_texte || "",
+        orateur: row.citation_orateur || "",
+        parti: row.citation_parti || "",
+      },
+      contexte: row.contexte_description
+        ? {
+            description: row.contexte_description,
+            auteur: row.contexte_auteur || "",
+          }
+        : null,
+      source_url: row.source_url,
+      updated_at: row.updated_at,
+    };
+  } catch {
+    return null;
+  }
+}
+
