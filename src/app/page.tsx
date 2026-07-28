@@ -128,7 +128,7 @@ export default function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
-      <div className="flex flex-col justify-center gap-12 lg:gap-16 min-h-[calc(100vh-160px)] pb-10">
+      <div className="flex flex-col justify-center gap-12 lg:gap-16 min-h-[calc(100vh-85px)] pb-10">
         <section className="space-y-5">
           <div className="max-w-4xl space-y-6">
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl text-[var(--foreground)]">
