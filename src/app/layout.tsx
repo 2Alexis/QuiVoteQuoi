@@ -60,12 +60,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="fr" className={`${geistSans.variable} h-full`}>
       <body className="min-h-full flex flex-col">
         <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--surface)]/90 backdrop-blur">
-          <div className="mx-auto flex max-w-6xl items-center gap-5 px-5 py-3">
+          <div className="mx-auto flex max-w-[1400px] items-center gap-5 px-5 py-3">
             <BrandLogo className="shrink-0" />
             <Nav />
           </div>
         </header>
-        <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-8">{children}</main>
+        <main className="mx-auto w-full max-w-[1400px] flex-1 px-5 py-8">{children}</main>
         <Footer />
       </body>
     </html>

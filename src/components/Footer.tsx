@@ -67,7 +67,7 @@ export function Footer() {
 
   return (
     <footer className="mt-12 border-t border-[var(--border)] bg-[var(--surface)]">
-      <div className="mx-auto max-w-6xl px-5 py-12">
+      <div className="mx-auto max-w-[1400px] px-5 py-12">
         <div className="flex flex-col gap-10 lg:flex-row lg:justify-between lg:gap-16">
           {/* Bloc marque */}
           <div className="max-w-sm space-y-3">

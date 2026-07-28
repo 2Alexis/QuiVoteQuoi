@@ -105,7 +105,7 @@ export function Nav() {
             id="menu-mobile"
             className="absolute inset-x-0 top-full z-20 border-b border-[var(--border)] bg-[var(--surface)] shadow-md md:hidden"
           >
-            <div className="mx-auto flex max-w-6xl flex-col gap-1 px-5 py-3">
+            <div className="mx-auto flex max-w-[1400px] flex-col gap-1 px-5 py-3">
               {NAV.map((n) => {
                 const actif = isActive(pathname, n.href);
                 return (

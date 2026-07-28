@@ -128,65 +128,67 @@ export default function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
-      <section className="space-y-5">
-        <div className="max-w-2xl space-y-4">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            L&apos;Assemblée nationale, enfin lisible.
-          </h1>
-          <p className="text-lg text-[var(--muted)]">
-            Difficile de savoir ce que votent vraiment les députés. QuiVoteQuoi rend chaque scrutin,
-            chaque vote et chaque prise de position clairs et comparables — à partir de données open
-            sources et officielles.
-          </p>
-          <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
-            {[
-              "Tous les scrutins publics",
-              "Le vote de chaque député",
-              "Comparez députés et groupes",
-            ].map((f) => (
-              <li key={f} className="flex items-center gap-1.5">
-                <span
-                  aria-hidden
-                  className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[10px] font-bold text-[var(--accent-strong)]"
-                >
-                  ✓
-                </span>
-                {f}
-              </li>
-            ))}
-          </ul>
-          <div className="flex flex-wrap items-center gap-3 pt-1">
-            <Link href="/comparateur" className="btn-primary">
-              <span aria-hidden>⇄</span> Comparer les votes
-            </Link>
-            <Link href="/scrutins" className="btn-secondary">
-              Voir les derniers scrutins
-            </Link>
+      <div className="flex flex-col justify-center gap-12 lg:gap-16 min-h-[calc(100vh-160px)] pb-10">
+        <section className="space-y-5">
+          <div className="max-w-4xl space-y-6">
+            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl text-[var(--foreground)]">
+              L&apos;Assemblée nationale, enfin lisible.
+            </h1>
+            <p className="text-lg sm:text-xl lg:text-2xl leading-relaxed text-[var(--muted)] max-w-3xl">
+              Difficile de savoir ce que votent vraiment les députés. QuiVoteQuoi rend chaque scrutin,
+              chaque vote et chaque prise de position clairs et comparables — à partir de données open
+              sources et officielles.
+            </p>
+            <ul className="flex flex-wrap gap-x-6 gap-y-3 text-sm sm:text-base">
+              {[
+                "Tous les scrutins publics",
+                "Le vote de chaque député",
+                "Comparez députés et groupes",
+              ].map((f) => (
+                <li key={f} className="flex items-center gap-2">
+                  <span
+                    aria-hidden
+                    className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[11px] font-bold text-[var(--accent-strong)]"
+                  >
+                    ✓
+                  </span>
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <div className="flex flex-wrap items-center gap-4 pt-2">
+              <Link href="/comparateur" className="btn-primary px-5 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base">
+                <span aria-hidden>⇄</span> Comparer les votes
+              </Link>
+              <Link href="/scrutins" className="btn-secondary px-5 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base">
+                Voir les derniers scrutins
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="space-y-2">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {[
-            { label: "Députés", value: s.deputes, href: "/deputes", Icon: IconDeputes },
-            { label: "Scrutins", value: s.scrutins, href: "/scrutins", Icon: IconScrutins },
-            { label: "Votes enregistrés", value: s.votes, href: "/scrutins", Icon: IconVotes },
-            { label: "Groupes", value: groupesReels.length, href: "/groupes", Icon: IconGroupes },
-          ].map(({ label, value, href, Icon }) => (
-            <Link key={label} href={href} className="card p-4 transition-shadow hover:shadow-sm">
-              <span className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--accent-soft)] text-[var(--accent-strong)]">
-                <Icon className="h-5 w-5" />
-              </span>
-              <div className="stat-num text-2xl font-bold sm:text-3xl">{formatNumber(value)}</div>
-              <div className="text-sm text-[var(--muted)]">{label}</div>
-            </Link>
-          ))}
-        </div>
-        <p className="text-xs text-[var(--muted)]">
-          Données officielles de l&apos;Assemblée nationale, à jour au {formatDate(s.lastDate)}.
-        </p>
-      </section>
+        <section className="space-y-2">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {[
+              { label: "Députés", value: s.deputes, href: "/deputes", Icon: IconDeputes },
+              { label: "Scrutins", value: s.scrutins, href: "/scrutins", Icon: IconScrutins },
+              { label: "Votes enregistrés", value: s.votes, href: "/scrutins", Icon: IconVotes },
+              { label: "Groupes", value: groupesReels.length, href: "/groupes", Icon: IconGroupes },
+            ].map(({ label, value, href, Icon }) => (
+              <Link key={label} href={href} className="card p-4 transition-shadow hover:shadow-sm">
+                <span className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--accent-soft)] text-[var(--accent-strong)]">
+                  <Icon className="h-5 w-5" />
+                </span>
+                <div className="stat-num text-2xl font-bold sm:text-3xl">{formatNumber(value)}</div>
+                <div className="text-sm text-[var(--muted)]">{label}</div>
+              </Link>
+            ))}
+          </div>
+          <p className="text-xs text-[var(--muted)]">
+            Données officielles de l&apos;Assemblée nationale, à jour au {formatDate(s.lastDate)}.
+          </p>
+        </section>
+      </div>
 
       <section className="space-y-3">
         <div className="flex items-baseline justify-between">

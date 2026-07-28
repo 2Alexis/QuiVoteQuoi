@@ -102,16 +102,22 @@ export function formatDate(iso?: string | null): string {
 
 export function formatNumber(n?: number | null): string {
   if (n == null) return "—";
-  return n.toLocaleString("fr-FR");
+  return n.toLocaleString("fr-FR").replace(/\s/g, "\u00A0");
 }
 
 // Montant en euros, forme compacte : 8,9 M€, 320 k€, 540 €.
 export function formatEuros(n?: number | null): string {
   if (n == null) return "—";
   const abs = Math.abs(n);
-  if (abs >= 1e6) return `${(n / 1e6).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} M€`;
-  if (abs >= 1e3) return `${(n / 1e3).toLocaleString("fr-FR", { maximumFractionDigits: 0 })} k€`;
-  return `${Math.round(n).toLocaleString("fr-FR")} €`;
+  let res = "";
+  if (abs >= 1e6) {
+    res = `${(n / 1e6).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} M€`;
+  } else if (abs >= 1e3) {
+    res = `${(n / 1e3).toLocaleString("fr-FR", { maximumFractionDigits: 0 })} k€`;
+  } else {
+    res = `${Math.round(n).toLocaleString("fr-FR")} €`;
+  }
+  return res.replace(/\s/g, "\u00A0");
 }
 
 export const CATEGORIE_COLORS: Record<string, string> = {
