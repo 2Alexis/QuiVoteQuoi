@@ -128,27 +128,27 @@ export default function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
-      <div className="flex flex-col justify-center gap-12 lg:gap-16 min-h-[calc(100vh-85px)] pb-10">
+      <div className="flex flex-col justify-center gap-12 lg:gap-16 min-h-[calc(100vh-110px)] pb-12">
         <section className="space-y-5">
-          <div className="max-w-4xl space-y-6">
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl text-[var(--foreground)]">
+          <div className="max-w-3xl space-y-4">
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl text-[var(--foreground)]">
               L&apos;Assemblée nationale, enfin lisible.
             </h1>
-            <p className="text-lg sm:text-xl lg:text-2xl leading-relaxed text-[var(--muted)] max-w-3xl">
+            <p className="text-base sm:text-lg leading-relaxed text-[var(--muted)] max-w-2xl">
               Difficile de savoir ce que votent vraiment les députés. QuiVoteQuoi rend chaque scrutin,
               chaque vote et chaque prise de position clairs et comparables — à partir de données open
               sources et officielles.
             </p>
-            <ul className="flex flex-wrap gap-x-6 gap-y-3 text-sm sm:text-base">
+            <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
               {[
                 "Tous les scrutins publics",
                 "Le vote de chaque député",
                 "Comparez députés et groupes",
               ].map((f) => (
-                <li key={f} className="flex items-center gap-2">
+                <li key={f} className="flex items-center gap-1.5">
                   <span
                     aria-hidden
-                    className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[11px] font-bold text-[var(--accent-strong)]"
+                    className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[10px] font-bold text-[var(--accent-strong)]"
                   >
                     ✓
                   </span>
@@ -156,11 +156,11 @@ export default function Home() {
                 </li>
               ))}
             </ul>
-            <div className="flex flex-wrap items-center gap-4 pt-2">
-              <Link href="/comparateur" className="btn-primary px-5 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base">
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <Link href="/comparateur" className="btn-primary">
                 <span aria-hidden>⇄</span> Comparer les votes
               </Link>
-              <Link href="/scrutins" className="btn-secondary px-5 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base">
+              <Link href="/scrutins" className="btn-secondary">
                 Voir les derniers scrutins
               </Link>
             </div>
@@ -175,12 +175,12 @@ export default function Home() {
               { label: "Votes enregistrés", value: s.votes, href: "/scrutins", Icon: IconVotes },
               { label: "Groupes", value: groupesReels.length, href: "/groupes", Icon: IconGroupes },
             ].map(({ label, value, href, Icon }) => (
-              <Link key={label} href={href} className="card p-4 transition-shadow hover:shadow-sm">
-                <span className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--accent-soft)] text-[var(--accent-strong)]">
-                  <Icon className="h-5 w-5" />
+              <Link key={label} href={href} className="card p-6 transition-all hover:shadow-md">
+                <span className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--accent-soft)] text-[var(--accent-strong)]">
+                  <Icon className="h-6 w-6" />
                 </span>
-                <div className="stat-num text-2xl font-bold sm:text-3xl">{formatNumber(value)}</div>
-                <div className="text-sm text-[var(--muted)]">{label}</div>
+                <div className="stat-num text-3xl font-extrabold sm:text-4xl">{formatNumber(value)}</div>
+                <div className="mt-1 text-sm sm:text-base font-medium text-[var(--muted)]">{label}</div>
               </Link>
             ))}
           </div>
